@@ -6,16 +6,19 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from xml.sax.saxutils import escape
 
 from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-from config import Settings
+try:
+    from app.config import Settings
+except ImportError:
+    from config import Settings
 
 settings = Settings()
 
@@ -42,19 +45,24 @@ class EvidencePDFService:
         self,
         worker_alias: str,
         entries: List[Dict[str, Any]],
-        output_path: str
+        output_path: str,
+        period_from: Optional[str] = None,
+        period_to: Optional[str] = None,
     ) -> str:
         """
         Generate an evidence PDF summary.
-        
+
         Args:
             worker_alias: Worker's alias
             entries: List of entry data
             output_path: Path to save the PDF
-            
+            period_from: Optional start date (YYYY-MM-DD)
+            period_to: Optional end date (YYYY-MM-DD)
+
         Returns:
             Path to the generated PDF
         """
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
         doc = SimpleDocTemplate(
             output_path,
             pagesize=A4,
@@ -63,33 +71,35 @@ class EvidencePDFService:
             topMargin=2*cm,
             bottomMargin=2*cm
         )
-        
+
         story = []
-        
+
         # Title
         story.append(Paragraph("WAGE EVIDENCE PACK", self.styles["CustomTitle"]))
-        story.append(Spacer(1, 1*cm))
-        
-        # Worker info
-        story.append(Paragraph(f"Worker: {worker_alias}", self.styles["CustomNormal"]))
+        story.append(Spacer(1, 0.7*cm))
+
+        # Worker info (escape XML special characters for ReportLab Paragraph)
+        story.append(Paragraph(f"Worker: {escape(worker_alias)}", self.styles["CustomNormal"]))
+        if period_from and period_to:
+            story.append(Paragraph(f"Period: {escape(period_from)} to {escape(period_to)}", self.styles["CustomNormal"]))
         story.append(Paragraph(f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC", self.styles["CustomNormal"]))
-        story.append(Spacer(1, 1*cm))
-        
+        story.append(Spacer(1, 0.8*cm))
+
         # Table header
         data = [
             ["Date", "Site", "Contractor", "Hours", "Agreed", "Paid", "Due", "Status"]
         ]
-        
-        # Table rows
+
+        # Table rows (use INR prefix so built-in Helvetica renders clearly without missing glyph boxes)
         for entry in entries:
             data.append([
                 entry.get("work_date", ""),
                 entry.get("site_name", "") or "",
                 entry.get("counterparty_name", "") or "",
-                str(entry.get("hours", "")) if entry.get("hours") else "",
-                f"₹{entry.get('agreed_inr', 0)}",
-                f"₹{entry.get('paid_inr', 0)}",
-                f"₹{entry.get('due_inr', 0)}",
+                str(entry.get("hours", "")) if entry.get("hours") is not None else "",
+                f"INR {entry.get('agreed_inr', 0)}",
+                f"INR {entry.get('paid_inr', 0)}",
+                f"INR {entry.get('due_inr', 0)}",
                 entry.get("status", "")
             ])
         

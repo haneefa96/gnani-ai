@@ -9,7 +9,10 @@ import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-from models import Entry
+try:
+    from app.models import Entry
+except ImportError:
+    from models import Entry
 
 
 class HashChainService:
@@ -68,8 +71,11 @@ class HashChainService:
         if not entries:
             return True, None
         
-        # Sort by created_at
-        sorted_entries = sorted(entries, key=lambda e: e.created_at)
+        # Sort deterministically by (created_at, id) so same-millisecond inserts keep order.
+        sorted_entries = sorted(
+            entries,
+            key=lambda e: (e.created_at or datetime.min, e.id or 0),
+        )
         
         prev_hash = self.GENESIS_HASH
         for i, entry in enumerate(sorted_entries):

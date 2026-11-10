@@ -5,12 +5,15 @@ Evidence pack router.
 from __future__ import annotations
 
 import os
-import shutil
+import uuid
 import zipfile
 from datetime import datetime
+from pathlib import Path
+from typing import Literal, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, ConfigDict
 
 from app.config import Settings
 from app.models import EvidencePack, Entry, Worker
@@ -33,50 +36,112 @@ def get_db():
 
 
 class EvidencePackRequest(BaseModel):
+    # Extra fields like a client-supplied worker_id are ignored; worker identity always comes from JWT.
+    model_config = ConfigDict(extra="ignore")
+
     period_from: str  # YYYY-MM-DD
     period_to: str  # YYYY-MM-DD
 
 
 class EvidencePackResponse(BaseModel):
+    pack_id: int
     pdf_uri: str
     zip_uri: str
+    pdf_download_url: str
+    zip_download_url: str
     chain_head_hash: str
+    entry_count: int
+
+
+def _parse_iso_date(value: str, field_name: str) -> datetime:
+    try:
+        return datetime.strptime(value.strip(), "%Y-%m-%d")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid {field_name} format. Expected YYYY-MM-DD.",
+        ) from exc
+
+
+def _resolve_owned_pack_file(
+    pack_id: int,
+    uri_attr: Literal["pdf_uri", "zip_uri"],
+    current_worker_id: int,
+    db,
+) -> Path:
+    """Resolve an evidence pack artifact strictly owned by current_worker_id inside storage root."""
+    pack = (
+        db.query(EvidencePack)
+        .filter(
+            EvidencePack.id == pack_id,
+            EvidencePack.worker_id == current_worker_id,
+        )
+        .first()
+    )
+    if not pack:
+        raise HTTPException(status_code=404, detail="Evidence pack not found")
+
+    raw_uri = getattr(pack, uri_attr, None)
+    if not raw_uri:
+        raise HTTPException(status_code=404, detail="Evidence file not available")
+
+    storage_root = Path(settings.AUDIO_STORAGE_PATH).resolve()
+    file_path = Path(raw_uri).resolve()
+    if not file_path.is_relative_to(storage_root) or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Evidence file not found")
+
+    return file_path
 
 
 @router.post("/evidence", response_model=EvidencePackResponse)
 async def build_evidence_pack(
     request: EvidencePackRequest,
     current_worker_id: CurrentWorker,
-    db = Depends(get_db)
+    db=Depends(get_db),
 ) -> EvidencePackResponse:
-    """Build evidence pack."""
-    # Get entries for the worker within the period
-    entries = db.query(Entry).filter(
-        Entry.worker_id == current_worker_id,
-        Entry.work_date >= request.period_from,
-        Entry.work_date <= request.period_to,
-    ).order_by(Entry.created_at).all()
-    
+    """Build evidence pack strictly for the JWT-authenticated worker."""
+    start_dt = _parse_iso_date(request.period_from, "period_from")
+    end_dt = _parse_iso_date(request.period_to, "period_to")
+    if start_dt > end_dt:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="period_from must be on or before period_to.",
+        )
+
+    period_from = start_dt.strftime("%Y-%m-%d")
+    period_to = end_dt.strftime("%Y-%m-%d")
+
+    entries = (
+        db.query(Entry)
+        .filter(
+            Entry.worker_id == current_worker_id,
+            Entry.status != Entry.STATUS_DELETED,
+            Entry.work_date >= period_from,
+            Entry.work_date <= period_to,
+        )
+        .order_by(Entry.created_at, Entry.id)
+        .all()
+    )
+
     if not entries:
         raise HTTPException(status_code=404, detail="No entries found for the specified period")
-    
-    # Generate PDF
-    pdf_service = EvidencePDFService()
-    pdf_path = f"./data/audio/evidence_{current_worker_id}_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
-    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
-    
-    # Get worker alias for the PDF
+
+    storage_dir = Path(settings.AUDIO_STORAGE_PATH)
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    uid = uuid.uuid4().hex[:8]
+    pdf_path = str(storage_dir / f"evidence_{current_worker_id}_{stamp}_{uid}.pdf")
+    zip_path = str(storage_dir / f"evidence_{current_worker_id}_{stamp}_{uid}.zip")
+
     worker = db.query(Worker).filter(Worker.id == current_worker_id).first()
-    
-    # Convert entries to dict for PDF
     entry_data = [
         {
             "id": e.id,
             "work_date": e.work_date,
             "site_name": e.site_name,
             "counterparty_name": e.counterparty_name,
-            "hours": float(e.hours) if e.hours else None,
-            "days": float(e.days) if e.days else None,
+            "hours": float(e.hours) if e.hours is not None else None,
+            "days": float(e.days) if e.days is not None else None,
             "agreed_inr": float(e.agreed_inr),
             "paid_inr": float(e.paid_inr),
             "due_inr": float(e.due_inr),
@@ -84,79 +149,130 @@ async def build_evidence_pack(
         }
         for e in entries
     ]
-    
+
+    pdf_service = EvidencePDFService()
     pdf_service.generate_evidence_pdf(
         worker_alias=worker.alias if worker else "Unknown",
         entries=entry_data,
         output_path=pdf_path,
+        period_from=period_from,
+        period_to=period_to,
     )
-    
-    # Create ZIP with audio files
-    zip_path = f"./data/audio/evidence_{current_worker_id}_{datetime.utcnow().strftime('%Y%m%d')}.zip"
-    with zipfile.ZipFile(zip_path, 'w') as zf:
-        # Add manifest
+
+    with zipfile.ZipFile(zip_path, "w") as zf:
         manifest = "Evidence Pack Manifest\n"
         manifest += f"Generated: {datetime.utcnow().isoformat()}\n"
         manifest += f"Worker ID: {current_worker_id}\n"
-        manifest += f"Period: {request.period_from} to {request.period_to}\n\n"
+        manifest += f"Period: {period_from} to {period_to}\n\n"
         manifest += "Entries:\n"
         for e in entries:
-            manifest += f"  - Entry ID {e.id}: {e.work_date}, {e.site_name}, Status: {e.status}\n"
-        
+            manifest += (
+                f"  - Entry ID {e.id}: {e.work_date}, {e.site_name}, "
+                f"Status: {e.status}, Hash: {e.entry_hash or 'DRAFT'}\n"
+            )
+
         zf.writestr("MANIFEST.txt", manifest)
-        
-        # Add PDF
         zf.write(pdf_path, os.path.basename(pdf_path))
-        
-        # Add audio files if they exist
+
+        added_audio: set[str] = set()
         for e in entries:
-            if e.audio_uri and os.path.exists(e.audio_uri):
-                zf.write(e.audio_uri, os.path.basename(e.audio_uri))
-    
-    # Get chain head hash
-    from app.services.hashchain import HashChainService
+            if e.audio_uri and os.path.isfile(e.audio_uri):
+                arcname = f"audio/{e.id}_{os.path.basename(e.audio_uri)}"
+                if arcname not in added_audio:
+                    zf.write(e.audio_uri, arcname)
+                    added_audio.add(arcname)
+
     hashchain = HashChainService()
-    chain_head_hash = hashchain.get_chain_head(entries)
-    
-    # Store evidence pack record
+    chain_entries = [e for e in entries if e.status != Entry.STATUS_DRAFT or e.entry_hash]
+    chain_head_hash = hashchain.get_chain_head(chain_entries) or ""
+
     evidence_pack = EvidencePack(
         worker_id=current_worker_id,
-        period_from=request.period_from,
-        period_to=request.period_to,
+        period_from=period_from,
+        period_to=period_to,
         pdf_uri=pdf_path,
         zip_uri=zip_path,
-        chain_head_hash=chain_head_hash or "",
+        chain_head_hash=chain_head_hash,
         created_at=datetime.utcnow(),
     )
     db.add(evidence_pack)
     db.commit()
-    
+    db.refresh(evidence_pack)
+
     return EvidencePackResponse(
+        pack_id=evidence_pack.id,
         pdf_uri=pdf_path,
         zip_uri=zip_path,
-        chain_head_hash=chain_head_hash or "",
+        pdf_download_url=f"/api/evidence/{evidence_pack.id}/pdf",
+        zip_download_url=f"/api/evidence/{evidence_pack.id}/zip",
+        chain_head_hash=chain_head_hash,
+        entry_count=len(entries),
+    )
+
+
+@router.get("/evidence/{pack_id}/pdf")
+async def download_evidence_pdf(
+    pack_id: int,
+    current_worker_id: CurrentWorker,
+    db=Depends(get_db),
+) -> FileResponse:
+    """Download the generated PDF for an evidence pack owned by the authenticated worker."""
+    file_path = _resolve_owned_pack_file(pack_id, "pdf_uri", current_worker_id, db)
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/pdf",
+        filename=f"evidence_pack_{pack_id}.pdf",
+    )
+
+
+@router.get("/evidence/{pack_id}/zip")
+async def download_evidence_zip(
+    pack_id: int,
+    current_worker_id: CurrentWorker,
+    db=Depends(get_db),
+) -> FileResponse:
+    """Download the generated ZIP archive for an evidence pack owned by the authenticated worker."""
+    file_path = _resolve_owned_pack_file(pack_id, "zip_uri", current_worker_id, db)
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/zip",
+        filename=f"evidence_pack_{pack_id}.zip",
     )
 
 
 @router.get("/verify", response_model=dict)
 async def verify_chain(
     current_worker_id: CurrentWorker,
-    db = Depends(get_db)
+    db=Depends(get_db),
 ) -> dict:
-    """Verify hash chain integrity."""
-    entries = db.query(Entry).filter(
-        Entry.worker_id == current_worker_id
-    ).order_by(Entry.created_at).all()
-    
-    if not entries:
-        return {"valid": True, "mismatch_reason": None, "message": "No entries to verify"}
-    
-    # Verify chain
-    from app.services.hashchain import HashChainService
+    """Verify hash chain integrity for the authenticated worker's ledger entries."""
+    entries = (
+        db.query(Entry)
+        .filter(
+            Entry.worker_id == current_worker_id,
+            Entry.status != Entry.STATUS_DELETED,
+        )
+        .order_by(Entry.created_at, Entry.id)
+        .all()
+    )
+
+    chain_entries = [e for e in entries if e.status != Entry.STATUS_DRAFT or e.entry_hash]
+    if not chain_entries:
+        return {
+            "valid": True,
+            "mismatch_reason": None,
+            "checked_entries": 0,
+            "chain_head_hash": None,
+            "message": "No confirmed entries to verify",
+        }
+
     hashchain = HashChainService()
-    is_valid, mismatch_reason = hashchain.verify_chain(entries)
-    
+    is_valid, mismatch_reason = hashchain.verify_chain(chain_entries)
+
     return {
         "valid": is_valid,
         "mismatch_reason": mismatch_reason,
+        "checked_entries": len(chain_entries),
+        "chain_head_hash": hashchain.get_chain_head(chain_entries) if is_valid else None,
+        "message": None,
     }
