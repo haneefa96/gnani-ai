@@ -27,10 +27,13 @@ components:
         work_date:
           type: string
           format: date
+          nullable: true
         site_name:
           type: string
+          nullable: true
         counterparty_name:
           type: string
+          nullable: true
         work_type:
           type: string
           nullable: true
@@ -42,10 +45,13 @@ components:
           nullable: true
         agreed_amount_inr:
           type: integer
+          nullable: true
         paid_amount_inr:
           type: integer
+          nullable: true
         due_amount_inr:
           type: integer
+          nullable: true
         field_confidence:
           type: object
           additionalProperties:
@@ -62,6 +68,23 @@ components:
         detected_language_code:
           type: string
           nullable: true
+
+    VoiceDraftReview:
+      allOf:
+        - $ref: '#/components/schemas/EntryDraft'
+        - type: object
+          required:
+            - draft_token
+            - transcript
+            - voice_mode
+          properties:
+            draft_token:
+              type: string
+            transcript:
+              type: string
+            voice_mode:
+              type: string
+              enum: [fake, gnani]
 
     WorkerCreate:
       type: object
@@ -124,6 +147,48 @@ components:
         transcript:
           type: string
         lang:
+          type: string
+
+    ConfirmVoiceDraft:
+      type: object
+      required:
+        - draft_token
+        - audio_base64
+        - work_date
+        - agreed_amount_inr
+        - paid_amount_inr
+        - language
+      properties:
+        draft_token:
+          type: string
+        audio_base64:
+          type: string
+          description: Base64 of the exact audio blob used to create the reviewed draft
+        work_date:
+          type: string
+          format: date
+        site_name:
+          type: string
+          nullable: true
+        counterparty_name:
+          type: string
+          nullable: true
+        work_type:
+          type: string
+          nullable: true
+        hours:
+          type: number
+          nullable: true
+        days:
+          type: number
+          nullable: true
+        agreed_amount_inr:
+          type: integer
+          minimum: 0
+        paid_amount_inr:
+          type: integer
+          minimum: 0
+        language:
           type: string
 
     EntryUpdate:
@@ -355,21 +420,62 @@ paths:
 
   /api/entries/draft:
     post:
-      summary: Create a new entry draft
+      summary: Transcribe audio and return an unsaved entry for worker review
       operationId: create_entry_draft
+      requestBody:
+        required: true
+        content:
+          audio/webm:
+            schema:
+              type: string
+              format: binary
+          audio/wav:
+            schema:
+              type: string
+              format: binary
+          audio/ogg:
+            schema:
+              type: string
+              format: binary
+          audio/mp4:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Unsaved transcript and extracted details for review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceDraftReview'
+        '413':
+          description: Audio exceeds the size limit
+        '415':
+          description: Unsupported audio format
+        '503':
+          description: Configured voice provider is unavailable
+
+  /api/entries/draft/confirm:
+    post:
+      summary: Save the worker-reviewed voice entry after explicit confirmation
+      operationId: confirm_voice_draft
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EntryCreate'
+              $ref: '#/components/schemas/ConfirmVoiceDraft'
       responses:
         '201':
-          description: Entry draft created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EntryDraft'
+          description: Entry saved and hash-chained as worker-confirmed
+        '400':
+          description: Invalid, expired, or mismatched draft/audio
+        '401':
+          description: Authentication required
+        '404':
+          description: Draft does not belong to this worker
+        '422':
+          description: Confirmed values are invalid or incomplete
 
   /api/entries/{id}:
     get:

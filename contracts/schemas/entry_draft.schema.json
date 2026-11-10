@@ -19,16 +19,16 @@
   ],
   "properties": {
     "work_date": {
-      "type": "string",
+      "type": ["string", "null"],
       "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
       "description": "Date of work in YYYY-MM-DD format"
     },
     "site_name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Name of the work site/location"
     },
     "counterparty_name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Name of the contractor/supervisor"
     },
     "work_type": {
@@ -49,17 +49,17 @@
       "description": "Number of days worked"
     },
     "agreed_amount_inr": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "minimum": 0,
       "description": "Amount agreed upon for the work"
     },
     "paid_amount_inr": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "minimum": 0,
       "description": "Amount already paid"
     },
     "due_amount_inr": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "minimum": 0,
       "description": "Amount still due (calculated: agreed - paid)"
     },

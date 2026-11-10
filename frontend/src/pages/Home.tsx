@@ -3,23 +3,124 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { VoiceButton } from '../voice/VoiceButton'
-import type { WorkerProfile } from '../api'
+import {
+  confirmVoiceDraft,
+  createVoiceDraft,
+  getApiErrorMessage,
+  type VoiceDraftConfirmation,
+  type VoiceDraftReview,
+  type WorkerProfile,
+} from '../api'
 import { useEntries } from '../useEntries'
+
+interface ReviewForm {
+  work_date: string
+  site_name: string
+  counterparty_name: string
+  work_type: string
+  hours: string
+  days: string
+  agreed_amount_inr: string
+  paid_amount_inr: string
+  language: string
+}
+
+function optionalNumber(value: string): number | null {
+  if (!value.trim()) return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
 
 export default function Home({ worker }: { worker: WorkerProfile }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [isRecording, setIsRecording] = useState(false)
   const { entries, loading, error, refresh } = useEntries()
+  const [voiceDraft, setVoiceDraft] = useState<VoiceDraftReview | null>(null)
+  const [draftAudio, setDraftAudio] = useState<Blob | null>(null)
+  const [review, setReview] = useState<ReviewForm | null>(null)
+  const [voiceError, setVoiceError] = useState('')
+  const [voiceSuccess, setVoiceSuccess] = useState('')
+  const [processingAudio, setProcessingAudio] = useState(false)
+  const [confirmingEntry, setConfirmingEntry] = useState(false)
   const unconfirmedCount = entries.filter((entry) => entry.status === 'UNCONFIRMED').length
   const latestDue = entries[0]?.due_inr
 
-  const handleRecord = (isRecording: boolean) => {
-    setIsRecording(isRecording)
-    if (!isRecording) {
-      // Start recording
+  const handleAudioEnd = async (audio: Blob) => {
+    setVoiceError('')
+    setVoiceSuccess('')
+    setProcessingAudio(true)
+    setDraftAudio(audio)
+    try {
+      const result = await createVoiceDraft(audio)
+      setVoiceDraft(result)
+      setReview({
+        work_date: result.work_date ?? '',
+        site_name: result.site_name ?? '',
+        counterparty_name: result.counterparty_name ?? '',
+        work_type: result.work_type ?? '',
+        hours: result.hours === null ? '' : String(result.hours),
+        days: result.days === null ? '' : String(result.days),
+        agreed_amount_inr: result.agreed_amount_inr === null
+          ? ''
+          : String(result.agreed_amount_inr),
+        paid_amount_inr: result.paid_amount_inr === null
+          ? ''
+          : String(result.paid_amount_inr),
+        language: result.language || worker.language,
+      })
+    } catch (requestError) {
+      setVoiceError(getApiErrorMessage(requestError, 'Could not process this recording. Please retry.'))
+    } finally {
+      setProcessingAudio(false)
     }
   }
+
+  const handleConfirmEntry = async () => {
+    if (!voiceDraft || !draftAudio || !review) return
+    const agreed = optionalNumber(review.agreed_amount_inr)
+    const paid = optionalNumber(review.paid_amount_inr)
+    if (
+      !review.work_date ||
+      agreed === null ||
+      paid === null ||
+      !Number.isInteger(agreed) ||
+      !Number.isInteger(paid)
+    ) {
+      setVoiceError('Enter a work date, agreed wage, and amount paid before confirming.')
+      return
+    }
+
+    const confirmation: VoiceDraftConfirmation = {
+      work_date: review.work_date,
+      site_name: review.site_name.trim() || null,
+      counterparty_name: review.counterparty_name.trim() || null,
+      work_type: review.work_type.trim() || null,
+      hours: optionalNumber(review.hours),
+      days: optionalNumber(review.days),
+      agreed_amount_inr: agreed,
+      paid_amount_inr: paid,
+      language: review.language,
+    }
+    setVoiceError('')
+    setConfirmingEntry(true)
+    try {
+      await confirmVoiceDraft(voiceDraft, draftAudio, confirmation)
+      setVoiceSuccess('Entry saved and confirmed.')
+      setVoiceDraft(null)
+      setDraftAudio(null)
+      setReview(null)
+      await refresh()
+    } catch (requestError) {
+      setVoiceError(getApiErrorMessage(requestError, 'Could not save the entry. Your review is still available; please retry.'))
+    } finally {
+      setConfirmingEntry(false)
+    }
+  }
+
+  const updateReview = <K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) => {
+    setReview((current) => current ? { ...current, [key]: value } : current)
+  }
+  const voiceBusy = processingAudio || confirmingEntry || voiceDraft !== null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -46,11 +147,164 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
           </p>
           
           <VoiceButton
-            onStateChange={handleRecord}
-            isRecording={isRecording}
+            isRecording={false}
             label={t('home:recordEntry')}
+            onEnd={(audio) => void handleAudioEnd(audio)}
+            disabled={voiceBusy}
           />
+          {processingAudio && (
+            <p role="status" className="mt-4 text-gray-600">
+              Processing recording…
+            </p>
+          )}
+          {voiceError && (
+            <div className="mt-4" aria-live="polite">
+              <p role="alert" className="text-red-700">{voiceError}</p>
+              {draftAudio && !voiceDraft && !processingAudio && (
+                <Button
+                  onClick={() => void handleAudioEnd(draftAudio)}
+                  variant="secondary"
+                  className="mt-2"
+                >
+                  Retry processing
+                </Button>
+              )}
+            </div>
+          )}
+          {voiceSuccess && (
+            <p role="status" className="mt-4 text-green-700">{voiceSuccess}</p>
+          )}
         </div>
+
+        {voiceDraft && review && (
+          <section className="mb-8 rounded-lg border border-blue-200 bg-white p-5 shadow" aria-labelledby="voice-review-title">
+            {voiceDraft.voice_mode === 'fake' && (
+              <p role="status" className="mb-4 rounded bg-amber-100 p-3 text-left text-amber-900">
+                DEMO MODE: this sample transcript and its details are synthetic, not a transcription of your recording.
+              </p>
+            )}
+            <h2 id="voice-review-title" className="mb-3 text-lg font-semibold">
+              Review before saving
+            </h2>
+            <p className="mb-4 rounded bg-gray-50 p-3 text-left text-sm text-gray-700">
+              <span className="font-medium">Transcript:</span> {voiceDraft.transcript}
+            </p>
+            {voiceDraft.needs_clarification.length > 0 && (
+              <div className="mb-4 rounded bg-amber-50 p-3 text-left text-sm text-amber-900">
+                <p>{voiceDraft.clarification_question || 'Please review the details marked for clarification.'}</p>
+                <p className="mt-1">Review these fields: {voiceDraft.needs_clarification.join(', ')}</p>
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-left text-sm">
+                Work date *
+                <input
+                  type="date"
+                  required
+                  value={review.work_date}
+                  onChange={(event) => updateReview('work_date', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label className="text-left text-sm">
+                Counterparty
+                <input
+                  value={review.counterparty_name}
+                  onChange={(event) => updateReview('counterparty_name', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label className="text-left text-sm">
+                Work site
+                <input
+                  value={review.site_name}
+                  onChange={(event) => updateReview('site_name', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label className="text-left text-sm">
+                Work type
+                <input
+                  value={review.work_type}
+                  onChange={(event) => updateReview('work_type', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label className="text-left text-sm">
+                Hours
+                <input
+                  type="number"
+                  min="0"
+                  step="0.25"
+                  value={review.hours}
+                  onChange={(event) => updateReview('hours', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label className="text-left text-sm">
+                Days
+                <input
+                  type="number"
+                  min="0"
+                  step="0.25"
+                  value={review.days}
+                  onChange={(event) => updateReview('days', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label className="text-left text-sm">
+                Agreed wage (INR) *
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={review.agreed_amount_inr}
+                  onChange={(event) => updateReview('agreed_amount_inr', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+              <label className="text-left text-sm">
+                Amount paid (INR) *
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={review.paid_amount_inr}
+                  onChange={(event) => updateReview('paid_amount_inr', event.target.value)}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              </label>
+            </div>
+            <p className="mt-3 text-left text-xs text-gray-600">
+              Due is calculated by the backend when you confirm. No entry is saved before confirmation.
+            </p>
+            {voiceError && <p role="alert" className="mt-3 text-left text-red-700">{voiceError}</p>}
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <Button
+                onClick={() => void handleConfirmEntry()}
+                disabled={confirmingEntry}
+                className="flex-1"
+              >
+                {confirmingEntry ? 'Saving…' : 'Confirm and save entry'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setVoiceDraft(null)
+                  setDraftAudio(null)
+                  setReview(null)
+                  setVoiceError('')
+                }}
+                disabled={confirmingEntry}
+                variant="secondary"
+                className="flex-1"
+              >
+                Discard review
+              </Button>
+            </div>
+          </section>
+        )}
 
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">

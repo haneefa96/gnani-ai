@@ -30,12 +30,24 @@ def get_db() -> Generator[Session, None, None]:
 
 def get_voice_service() -> VoiceService:
     """Get voice service implementation."""
-    if settings.is_fake_voice:
+    if settings.VOICE_IMPL.lower() == "fake":
         from contracts.fake_voice import FakeVoice
         return FakeVoice()
-    else:
-        from backend.voice.service import GnaniVoice
+
+    if settings.VOICE_IMPL.lower() == "gnani":
+        try:
+            from backend.voice.service import GnaniVoice
+        except ModuleNotFoundError as error:
+            raise HTTPException(
+                status_code=503,
+                detail="Gnani voice processing is not installed or configured",
+            ) from error
         return GnaniVoice()
+
+    raise HTTPException(
+        status_code=503,
+        detail="The configured voice implementation is unavailable",
+    )
 
 
 def get_hashchain_service() -> HashChainService:
