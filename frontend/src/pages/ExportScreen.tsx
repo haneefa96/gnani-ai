@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/Button";
 import {
   ApiError,
@@ -158,33 +159,25 @@ export default function ExportScreen() {
     verifyState === "auth_error" || packState === "auth_error";
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">{t("export:title")}</h1>
-          <button
-            onClick={() => navigate("/home")}
-            className="p-2"
-            aria-label={t("common:back")}
-          >
-            ←
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <AppHeader
+        title={t("export:title")}
+        onBack={() => navigate("/home")}
+        backLabel={t("common:back")}
+      />
 
-      <div className="container mx-auto p-4 space-y-4">
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Hash Chain Verification Card */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-base font-semibold">
+            <h2 className="text-base font-semibold text-slate-900">
               {t("export:verificationTitle", "Ledger Hash-Chain Verification")}
             </h2>
             <button
               type="button"
               onClick={() => void runVerification()}
               disabled={verifyState === "loading"}
-              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+              className="text-sm font-medium text-indigo-700 hover:text-indigo-900 disabled:text-slate-400"
             >
               {t("export:recheckVerification", "Recheck")}
             </button>
@@ -193,7 +186,7 @@ export default function ExportScreen() {
           {verifyState === "loading" && (
             <p
               data-testid="verify-loading"
-              className="text-sm text-gray-600 mt-2"
+              className="text-sm text-slate-600 mt-2.5"
             >
               {t("export:verifyingChain", "Verifying hash chain integrity...")}
             </p>
@@ -202,16 +195,16 @@ export default function ExportScreen() {
           {verifyState === "valid" && (
             <div
               data-testid="verify-valid"
-              className="mt-2 p-3 rounded bg-green-50 text-green-800 text-sm"
+              className="mt-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm"
             >
-              <span className="font-medium">
+              <span className="font-semibold">
                 {t("export:chainValid", "Hash chain verified intact")}
               </span>
               {typeof verifyResult?.checked_entries === "number" && (
                 <span> ({verifyResult.checked_entries} entries)</span>
               )}
               {verifyResult?.message && (
-                <div className="text-xs text-green-700 mt-1">
+                <div className="text-xs text-emerald-700 mt-1">
                   {verifyResult.message}
                 </div>
               )}
@@ -221,9 +214,9 @@ export default function ExportScreen() {
           {verifyState === "invalid" && (
             <div
               data-testid="verify-invalid"
-              className="mt-2 p-3 rounded bg-red-50 text-red-800 text-sm"
+              className="mt-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm"
             >
-              <div className="font-medium">
+              <div className="font-semibold">
                 {t("export:chainInvalid", "Hash chain verification failed")}
               </div>
               {verifyResult?.mismatch_reason && (
@@ -237,21 +230,21 @@ export default function ExportScreen() {
           {verifyState === "error" && (
             <div
               data-testid="verify-error"
-              className="mt-2 p-3 rounded bg-red-50 text-red-700 text-sm"
+              className="mt-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm"
             >
               {verifyError}
             </div>
           )}
-        </div>
+        </section>
 
         {/* Auth Error State */}
         {isAuthBlocked && (
           <div
             data-testid="auth-error"
             role="alert"
-            className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 space-y-3"
+            className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-5 space-y-3"
           >
-            <p className="font-medium">
+            <p className="font-semibold">
               {t(
                 "export:authRequired",
                 "Authentication required or session expired.",
@@ -270,21 +263,39 @@ export default function ExportScreen() {
 
         {/* Success Card with Real Downloads */}
         {packState === "success" && pack && (
-          <div
+          <section
             data-testid="pack-success"
-            className="bg-white rounded-lg shadow-lg p-6 text-center space-y-4"
+            className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 text-center space-y-4"
           >
-            <div className="text-5xl">✓</div>
-            <h2 className="text-2xl font-bold">{t("export:generated")}</h2>
-            <p className="text-gray-600">{t("export:packGenerated")}</p>
+            <div
+              aria-hidden="true"
+              className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="w-7 h-7 fill-none stroke-current"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+              {t("export:generated")}
+            </h2>
+            <p className="text-sm text-slate-600">{t("export:packGenerated")}</p>
 
-            <div className="text-left bg-gray-50 rounded p-3 text-xs text-gray-700 space-y-1">
+            <div className="text-left bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 text-xs text-slate-700 space-y-1.5">
               <div>
-                <span className="font-medium">Entries:</span> {pack.entry_count}
+                <span className="font-semibold">Entries:</span>{" "}
+                <span className="tabular-nums">{pack.entry_count}</span>
               </div>
               <div className="break-all">
-                <span className="font-medium">Chain Head Hash:</span>{" "}
-                <code>{pack.chain_head_hash || "NONE"}</code>
+                <span className="font-semibold">Chain Head Hash:</span>{" "}
+                <code className="font-mono text-slate-800">
+                  {pack.chain_head_hash || "NONE"}
+                </code>
               </div>
             </div>
 
@@ -292,7 +303,7 @@ export default function ExportScreen() {
               <div
                 data-testid="download-error"
                 role="alert"
-                className="bg-red-50 text-red-700 p-3 rounded text-sm"
+                className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-sm"
               >
                 {downloadError}
               </div>
@@ -301,13 +312,13 @@ export default function ExportScreen() {
             {downloadNotice && (
               <div
                 data-testid="download-notice"
-                className="bg-green-50 text-green-800 p-3 rounded text-sm"
+                className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-sm"
               >
                 {downloadNotice}
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2.5 pt-1">
               <Button
                 onClick={() => void handleDownload("pdf")}
                 disabled={downloading !== null}
@@ -341,16 +352,16 @@ export default function ExportScreen() {
             >
               {t("common:back")}
             </Button>
-          </div>
+          </section>
         )}
 
         {/* Period Selection & Generation Form */}
         {packState !== "success" && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-slate-900 mb-1.5">
               {t("export:generatePack")}
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm text-slate-600 mb-6">
               {t("export:periodDescription")}
             </p>
 
@@ -358,7 +369,7 @@ export default function ExportScreen() {
               <div
                 data-testid="export-empty"
                 role="status"
-                className="mb-4 p-4 rounded-lg bg-gray-100 text-gray-700 text-sm"
+                className="mb-4 p-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 text-sm"
               >
                 {packError ||
                   t(
@@ -372,17 +383,17 @@ export default function ExportScreen() {
               <div
                 data-testid="export-error"
                 role="alert"
-                className="mb-4 p-4 rounded-lg bg-red-50 text-red-700 text-sm"
+                className="mb-4 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm"
               >
                 {packError}
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label
                   htmlFor="period-from"
-                  className="block text-sm font-medium mb-2"
+                  className="block text-sm font-medium text-slate-700 mb-1.5"
                 >
                   {t("export:periodFrom")}
                 </label>
@@ -391,13 +402,13 @@ export default function ExportScreen() {
                   type="date"
                   value={periodFrom}
                   onChange={(e) => setPeriodFrom(e.target.value)}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </div>
               <div>
                 <label
                   htmlFor="period-to"
-                  className="block text-sm font-medium mb-2"
+                  className="block text-sm font-medium text-slate-700 mb-1.5"
                 >
                   {t("export:periodTo")}
                 </label>
@@ -406,7 +417,7 @@ export default function ExportScreen() {
                   type="date"
                   value={periodTo}
                   onChange={(e) => setPeriodTo(e.target.value)}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </div>
             </div>
@@ -421,20 +432,20 @@ export default function ExportScreen() {
                 : t("export:generate")}
             </Button>
 
-            <div className="mt-6">
-              <h3 className="font-semibold mb-2">
+            <div className="mt-6 pt-5 border-t border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-900 mb-2">
                 {t("export:whatIsIncluded")}
               </h3>
-              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+              <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
                 <li>{t("export:includedPDF")}</li>
                 <li>{t("export:includedAudio")}</li>
                 <li>{t("export:includedManifest")}</li>
                 <li>{t("export:includedVerification")}</li>
               </ul>
             </div>
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   );
 }

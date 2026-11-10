@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { AppHeader } from '../components/AppHeader'
 import { Button } from '../components/Button'
 import {
   changeWorkerPin,
@@ -79,48 +80,84 @@ export default function Settings({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">{t('settings:title')}</h1>
-          <button
-            onClick={() => navigate('/home')}
-            className="p-2"
-            aria-label={t('common:back')}
-          >
-            ←
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <AppHeader
+        title={t('settings:title')}
+        onBack={() => navigate('/home')}
+        backLabel={t('common:back')}
+      />
 
-      {/* Content */}
-      <div className="container mx-auto p-4">
-        <Button onClick={onLogout} variant="secondary" className="w-full mb-6">
-          {t('common:logout')}
-        </Button>
-
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Worker info */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <h2 className="font-semibold mb-4">{t('settings:workerInfo')}</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">{t('settings:alias')}</span>
-              <span>{worker.alias}</span>
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h2 className="font-semibold text-slate-900">
+              {t('settings:workerInfo')}
+            </h2>
+            <Button onClick={onLogout} variant="secondary" size="sm">
+              {t('common:logout')}
+            </Button>
+          </div>
+          <div className="divide-y divide-slate-100 text-sm">
+            <div className="flex justify-between py-2.5">
+              <span className="text-slate-500">{t('settings:alias')}</span>
+              <span className="font-medium text-slate-900">{worker.alias}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">{t('settings:language')}</span>
-              <span>{worker.language}</span>
+            <div className="flex justify-between py-2.5">
+              <span className="text-slate-500">{t('settings:language')}</span>
+              <span className="font-medium text-slate-900">
+                {worker.language}
+              </span>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Language preference */}
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <h2 className="font-semibold text-slate-900 mb-1.5">
+            {t('settings:language')}
+          </h2>
+          <p className="text-sm text-slate-600 mb-2">
+            {t('settings:languageDescription')}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mb-3">
+            {t('settings:currentLanguage', { lang: worker.language })}
+          </p>
+          {languageError && (
+            <p
+              role="alert"
+              className="text-sm text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-xl mb-3"
+            >
+              {languageError}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2.5">
+            {SUPPORTED_LANGUAGE_OPTIONS.map((lang) => (
+              <button
+                key={lang.code}
+                type="button"
+                disabled={changingLanguage}
+                onClick={() => void handleLanguageSelect(lang.code)}
+                className={`p-3 rounded-xl border transition text-sm font-medium ${
+                  worker.language === lang.code
+                    ? 'bg-indigo-700 text-white border-indigo-700 shadow-sm'
+                    : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                }`}
+              >
+                {lang.name}
+              </button>
+            ))}
+          </div>
+        </section>
 
         {/* Change PIN */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <h2 className="font-semibold mb-4">{t('settings:changePin')}</h2>
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <h2 className="font-semibold text-slate-900 mb-4">
+            {t('settings:changePin')}
+          </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 {t('settings:currentPin')}
               </label>
               <input
@@ -129,14 +166,14 @@ export default function Settings({
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 placeholder={t('settings:enterCurrentPin')}
-                className="w-full p-3 border rounded-lg"
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 inputMode="numeric"
                 maxLength={72}
                 autoComplete="current-password"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 {t('settings:newPin')}
               </label>
               <input
@@ -145,14 +182,14 @@ export default function Settings({
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value)}
                 placeholder={t('settings:enterNewPin')}
-                className="w-full p-3 border rounded-lg"
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 inputMode="numeric"
                 maxLength={4}
                 autoComplete="new-password"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 {t('settings:confirmNewPin')}
               </label>
               <input
@@ -161,17 +198,21 @@ export default function Settings({
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value)}
                 placeholder={t('settings:confirmNewPin')}
-                className="w-full p-3 border rounded-lg"
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 inputMode="numeric"
                 maxLength={4}
                 autoComplete="new-password"
               />
             </div>
             {pinError && (
-              <p role="alert" className="text-sm text-red-700">{pinError}</p>
+              <p role="alert" className="text-sm text-rose-700">
+                {pinError}
+              </p>
             )}
             {pinSuccess && (
-              <p role="status" className="text-sm text-green-700">{pinSuccess}</p>
+              <p role="status" className="text-sm text-emerald-700">
+                {pinSuccess}
+              </p>
             )}
             <Button
               onClick={() => void handlePinChange()}
@@ -181,57 +222,25 @@ export default function Settings({
               {changingPin ? t('common:loading') : t('settings:savePin')}
             </Button>
           </div>
-        </div>
+        </section>
 
         {/* Data deletion */}
-        <div className="bg-red-50 rounded-lg shadow p-4 mb-6">
-          <h2 className="font-semibold text-red-800 mb-4">
+        <section className="bg-rose-50/70 rounded-2xl border border-rose-200 p-5">
+          <h2 className="font-semibold text-rose-900 mb-2">
             {t('settings:deleteAccount')}
           </h2>
-          <p className="text-sm text-red-700 mb-4">
+          <p className="text-sm text-rose-700 mb-4">
             {t('settings:deleteAccountWarning')}
           </p>
           <Button
             onClick={handleDeleteAccount}
-            className="w-full bg-red-600 text-white"
+            variant="danger"
+            className="w-full"
           >
             {t('settings:deleteAccount')}
           </Button>
-        </div>
-
-        {/* Language preference */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="font-semibold mb-4">{t('settings:language')}</h2>
-          <div className="space-y-3">
-            <p className="text-sm text-gray-600">
-              {t('settings:languageDescription')}
-            </p>
-            <p className="text-sm font-medium">
-              {t('settings:currentLanguage', { lang: worker.language })}
-            </p>
-            {languageError && (
-              <p role="alert" className="text-sm text-red-700">{languageError}</p>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              {SUPPORTED_LANGUAGE_OPTIONS.map((lang) => (
-                <button
-                  key={lang.code}
-                  type="button"
-                  disabled={changingLanguage}
-                  onClick={() => void handleLanguageSelect(lang.code)}
-                  className={`p-3 rounded-lg transition text-sm font-medium ${
-                    worker.language === lang.code
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  }`}
-                >
-                  {lang.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   )
 }

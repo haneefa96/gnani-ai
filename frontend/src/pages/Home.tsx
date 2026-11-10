@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/Button";
+import { StatusBadge } from "../components/StatusBadge";
 import { TtsPlayer } from "../voice/TtsPlayer";
 import { VoiceButton } from "../voice/VoiceButton";
 import type { SavedAudio, SttStatus } from "../voice/types";
@@ -201,28 +203,38 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
       : draft?.due_amount_inr ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">Saakshi</h1>
+    <div className="min-h-screen bg-slate-50">
+      <AppHeader
+        title="Saakshi"
+        subtitle={t("home:worker", { worker: worker.alias })}
+        rightSlot={
           <button
+            type="button"
             onClick={() => navigate("/settings")}
-            className="p-2"
             aria-label={t("common:settings")}
+            className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
-            ⚙️
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="w-5 h-5 fill-none stroke-current"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
           </button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Main content */}
-      <div className="container mx-auto p-4">
-        <div className="text-center mb-8">
-          <h2 className="text-lg mb-4">{t("home:description")}</h2>
-          <p className="text-gray-600 text-sm mb-6">
-            {t("home:worker", { worker: worker.alias })}
-          </p>
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* Hero voice recorder */}
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-7 text-center">
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-5">
+            {t("home:description")}
+          </h2>
 
           <VoiceButton
             lang={workerLang}
@@ -243,16 +255,18 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
           />
 
           {(voiceStatus !== "idle" || extracting) && (
-            <p className="text-xs text-gray-500 mt-2">
-              {extracting ? t("common:loading") : voiceStatus}
-            </p>
+            <div className="mt-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                {extracting ? t("common:loading") : voiceStatus}
+              </span>
+            </div>
           )}
-        </div>
+        </section>
 
         {voiceError && (
           <div
             role="alert"
-            className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm"
+            className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm"
           >
             {voiceError}
           </div>
@@ -261,7 +275,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         {saveNotice && (
           <div
             role="status"
-            className="bg-green-50 text-green-800 p-3 rounded-lg mb-4 text-sm"
+            className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-medium"
           >
             {saveNotice}
           </div>
@@ -269,11 +283,14 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
         {draft && review && (
           <section
-            className="bg-white rounded-lg border border-blue-200 shadow p-5 mb-6 space-y-4"
+            className="bg-white rounded-2xl border border-indigo-200 shadow-sm p-5 sm:p-6 space-y-4"
             aria-labelledby="voice-review-title"
           >
             <div className="flex justify-between items-center">
-              <h3 id="voice-review-title" className="font-semibold text-base">
+              <h3
+                id="voice-review-title"
+                className="font-semibold text-base text-slate-900"
+              >
                 Voice Entry Draft
               </h3>
               <button
@@ -286,19 +303,19 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   setVoiceError("");
                 }}
                 disabled={saving}
-                className="text-xs text-gray-500 hover:text-gray-800"
+                className="text-xs font-medium text-slate-500 hover:text-slate-800"
               >
                 {t("common:cancel", "Cancel")}
               </button>
             </div>
 
-            <p className="rounded bg-gray-50 p-3 text-xs text-gray-700 italic">
+            <p className="border-l-4 border-indigo-300 rounded-r-xl bg-slate-50 px-3.5 py-2.5 text-xs text-slate-700 italic">
               &ldquo;{transcript}&rdquo;
             </p>
 
             {(draft.clarification_question ||
               draft.needs_clarification.length > 0) && (
-              <div className="bg-amber-50 border border-amber-200 rounded p-3 space-y-2 text-sm">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-2.5 text-sm">
                 <p className="font-medium text-amber-900">
                   {draft.clarification_question ||
                     "Please review the details marked for clarification."}
@@ -309,7 +326,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   </p>
                 )}
                 {draft.clarification_question && (
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <TtsPlayer
                       text={draft.clarification_question}
                       lang={draft.language}
@@ -333,7 +350,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
             <div className="grid gap-3 sm:grid-cols-2 text-sm">
               <label className="text-left">
-                <span className="text-gray-600">Work date *</span>
+                <span className="font-medium text-slate-700">Work date *</span>
                 <input
                   type="date"
                   required
@@ -341,41 +358,41 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("work_date", event.target.value)
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="text-gray-600">Contractor</span>
+                <span className="font-medium text-slate-700">Contractor</span>
                 <input
                   value={review.counterparty_name}
                   onChange={(event) =>
                     updateReview("counterparty_name", event.target.value)
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="text-gray-600">Work site</span>
+                <span className="font-medium text-slate-700">Work site</span>
                 <input
                   value={review.site_name}
                   onChange={(event) =>
                     updateReview("site_name", event.target.value)
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="text-gray-600">Work type</span>
+                <span className="font-medium text-slate-700">Work type</span>
                 <input
                   value={review.work_type}
                   onChange={(event) =>
                     updateReview("work_type", event.target.value)
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="text-gray-600">Hours</span>
+                <span className="font-medium text-slate-700">Hours</span>
                 <input
                   type="number"
                   min="0"
@@ -384,22 +401,24 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("hours", event.target.value)
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="text-gray-600">Days</span>
+                <span className="font-medium text-slate-700">Days</span>
                 <input
                   type="number"
                   min="0"
                   step="0.25"
                   value={review.days}
                   onChange={(event) => updateReview("days", event.target.value)}
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="text-gray-600">Agreed (INR) *</span>
+                <span className="font-medium text-slate-700">
+                  Agreed (INR) *
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -409,11 +428,11 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("agreed_amount_inr", event.target.value)
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="text-gray-600">Paid (INR) *</span>
+                <span className="font-medium text-slate-700">Paid (INR) *</span>
                 <input
                   type="number"
                   min="0"
@@ -423,14 +442,16 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("paid_amount_inr", event.target.value)
                   }
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
                 />
               </label>
             </div>
 
-            <div className="text-sm font-semibold">
-              <span className="text-gray-500 font-normal">Due:</span> ₹
-              {computedDue}
+            <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200/80 px-4 py-2.5 text-sm">
+              <span className="text-slate-600">Due</span>
+              <span className="text-base font-bold text-slate-900 tabular-nums">
+                ₹{computedDue}
+              </span>
             </div>
 
             <Button
@@ -444,91 +465,99 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         )}
 
         {/* Quick stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <div className="text-2xl font-bold text-blue-600">
+        <section className="grid grid-cols-3 gap-3">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm text-center">
+            <div className="text-lg sm:text-xl font-bold text-indigo-700 tabular-nums">
               {loading || error
                 ? "—"
                 : t("home:entries", { count: entries.length })}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-xs text-slate-500 mt-1">
               {t("home:totalEntries")}
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm text-center">
+            <div className="text-lg sm:text-xl font-bold text-emerald-700 tabular-nums">
               {loading || error || latestDue === undefined
                 ? "—"
                 : t("home:dueAmount", { amount: latestDue })}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-xs text-slate-500 mt-1">
               {t("home:latestEntryDue")}
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <div className="text-2xl font-bold text-orange-600">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm text-center">
+            <div className="text-lg sm:text-xl font-bold text-amber-600 tabular-nums">
               {loading || error
                 ? "—"
                 : t("home:unconfirmed", { count: unconfirmedCount })}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-xs text-slate-500 mt-1">
               {t("home:unconfirmedEntries")}
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Recent entries */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">{t("home:recentEntries")}</h3>
+        <section>
+          <div className="flex justify-between items-center mb-3 px-1">
+            <h3 className="text-base font-semibold text-slate-900">
+              {t("home:recentEntries")}
+            </h3>
             <button
+              type="button"
               onClick={() => navigate("/history")}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
             >
               {t("home:viewAll")}
             </button>
           </div>
-          <div className="bg-white rounded-lg shadow p-4" aria-live="polite">
+          <div
+            className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4"
+            aria-live="polite"
+          >
             {loading ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-slate-500 py-8 text-sm">
                 {t("common:loading")}
               </div>
             ) : error ? (
               <div className="text-center py-6">
-                <p role="alert" className="text-red-700 mb-3">
+                <p role="alert" className="text-rose-700 text-sm mb-3">
                   {error}
                 </p>
-                <Button onClick={() => void refresh()} variant="secondary">
+                <Button
+                  onClick={() => void refresh()}
+                  variant="secondary"
+                  size="sm"
+                >
                   {t("common:retry")}
                 </Button>
               </div>
             ) : entries.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-slate-500 py-8 text-sm">
                 {t("home:noEntriesYet")}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="divide-y divide-slate-100">
                 {entries.slice(0, 3).map((entry) => (
                   <div
                     key={entry.id}
-                    className="border-b last:border-b-0 pb-3 last:pb-0"
+                    className="py-3 first:pt-1 last:pb-1 flex items-center justify-between gap-3"
                   >
-                    <div className="flex justify-between gap-3">
-                      <div>
-                        <div className="font-medium">
-                          {entry.site_name || "—"}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {entry.work_date} · {entry.counterparty_name || "—"}
-                        </div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-slate-900 truncate">
+                        {entry.site_name || "—"}
                       </div>
-                      <div className="text-right">
-                        <div>
-                          {t("home:dueAmount", { amount: entry.due_inr })}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {entry.status}
-                        </div>
+                      <div className="text-xs text-slate-500 mt-0.5 tabular-nums truncate">
+                        {entry.work_date} · {entry.counterparty_name || "—"}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 space-y-1">
+                      <div className="font-semibold text-slate-900 text-sm tabular-nums">
+                        {t("home:dueAmount", { amount: entry.due_inr })}
+                      </div>
+                      <div>
+                        <StatusBadge status={entry.status} />
                       </div>
                     </div>
                   </div>
@@ -536,23 +565,23 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Evidence pack */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">
+        <section>
+          <h3 className="text-base font-semibold text-slate-900 mb-3 px-1">
             {t("home:evidencePack")}
           </h3>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
             <Button onClick={() => navigate("/export")} className="w-full">
               {t("home:generatePack")}
             </Button>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-xs text-slate-500 mt-2.5 text-center">
               {t("home:packDescription")}
             </p>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

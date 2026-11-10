@@ -20,13 +20,28 @@ export default function ContractorThanks() {
   const submission = result && status ? { result, status } : null
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-        {submission && <div className="text-6xl mb-4">✓</div>}
-        <h2 className="text-2xl font-bold mb-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 text-center">
+        {submission && (
+          <div
+            aria-hidden="true"
+            className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="w-7 h-7 fill-none stroke-current"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+        )}
+        <h2 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight">
           {submission ? t('contractor:thanksTitle') : t('contractor:notSubmittedTitle')}
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-sm text-slate-600 mb-6">
           {submission
             ? t('contractor:recordedStatus', {
                 result: t(`contractor:results.${submission.result}`),

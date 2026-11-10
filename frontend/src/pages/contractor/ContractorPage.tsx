@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { AppHeader } from "../../components/AppHeader";
 import { Button } from "../../components/Button";
 import { TtsPlayer } from "../../voice/TtsPlayer";
 import { VoiceButton } from "../../voice/VoiceButton";
@@ -129,7 +130,7 @@ export default function ContractorPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-600 text-sm">
         {t("common:loading")}
       </div>
     );
@@ -137,12 +138,12 @@ export default function ContractorPage() {
 
   if (!entryData) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <p role="alert" className="text-red-700 mb-4">
+      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 text-center">
+          <p role="alert" className="text-rose-700 font-medium mb-2">
             {error || t("contractor:tokenUnavailable")}
           </p>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-slate-600 mb-6">
             {t("contractor:tokenUnavailableHelp")}
           </p>
           <Button onClick={() => void loadEntry()} variant="secondary">
@@ -154,45 +155,38 @@ export default function ContractorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" aria-busy={submitting}>
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">Saakshi</h1>
-          <div className="text-sm text-blue-100">
-            {t("contractor:contractorPage")}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50" aria-busy={submitting}>
+      <AppHeader title="Saakshi" subtitle={t("contractor:contractorPage")} />
 
-      {/* Content */}
-      <div className="container mx-auto p-4">
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Notice */}
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded">
-          <h3 className="font-semibold text-yellow-800">
+        <section className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <h3 className="font-semibold text-amber-900 text-sm">
             {t("contractor:noticeTitle")}
           </h3>
-          <p className="text-sm text-yellow-700 mt-1">
+          <p className="text-sm text-amber-800 mt-1">
             {t("contractor:noticeDescription")}
           </p>
-        </div>
+        </section>
 
         {/* Entry text */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">
-            {t("contractor:workEntry")}
-          </h2>
-          <p className="text-gray-700 whitespace-pre-wrap">
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-base font-semibold text-slate-900">
+              {t("contractor:workEntry")}
+            </h2>
+            <span className="text-xs text-slate-500 tabular-nums">
+              {t("contractor:entryId", { id: entryData.entry_id })}
+            </span>
+          </div>
+          <p className="rounded-xl bg-slate-50 border border-slate-200/80 p-3.5 text-slate-800 text-sm whitespace-pre-wrap">
             {entryData.entry_text || "—"}
           </p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-xs text-slate-500 mt-2.5">
             {t("contractor:language", { lang: entryData.language })}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
-            {t("contractor:entryId", { id: entryData.entry_id })}
-          </p>
           {entryData.entry_text && (
-            <div className="mt-3">
+            <div className="mt-4">
               <TtsPlayer
                 text={entryData.entry_text}
                 lang={toSupportedLanguage(entryData.language)}
@@ -201,12 +195,14 @@ export default function ContractorPage() {
               />
             </div>
           )}
-        </div>
+        </section>
 
         {/* Voice confirmation response */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h3 className="font-semibold mb-4">{t("contractor:confirmEntry")}</h3>
-          <p className="text-sm text-gray-600 mb-4">
+        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+          <h3 className="font-semibold text-slate-900 mb-1.5">
+            {t("contractor:confirmEntry")}
+          </h3>
+          <p className="text-sm text-slate-600 mb-5">
             {t("contractor:confirmDescription")}
           </p>
 
@@ -243,10 +239,14 @@ export default function ContractorPage() {
             onError={(err) => setError(err.message)}
           />
           {voiceStatus !== "idle" && (
-            <p className="text-xs text-gray-500 mt-2">{voiceStatus}</p>
+            <div className="mt-3 text-center">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                {voiceStatus}
+              </span>
+            </div>
           )}
           {voiceNote && (
-            <p className="text-xs text-gray-600 mt-2 italic">
+            <p className="text-xs text-slate-600 mt-3 italic text-center">
               &ldquo;{voiceNote}&rdquo;
             </p>
           )}
@@ -254,13 +254,13 @@ export default function ContractorPage() {
           {error && (
             <p
               role="alert"
-              className="bg-red-50 text-red-700 p-3 rounded-lg mt-4 text-sm"
+              className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl mt-4 text-sm"
             >
               {error}
             </p>
           )}
 
-          <div className="mt-6 flex gap-4">
+          <div className="mt-6 flex gap-3">
             <Button
               onClick={() => void submitResponse("yes")}
               disabled={submitting}
@@ -277,22 +277,22 @@ export default function ContractorPage() {
               {t("contractor:tapNo")}
             </Button>
           </div>
-        </div>
+        </section>
 
         {/* Dispute option */}
-        <div className="bg-red-50 rounded-lg shadow p-6">
-          <h3 className="font-semibold text-red-800 mb-2">
+        <section className="bg-rose-50/70 rounded-2xl border border-rose-200 p-5 sm:p-6">
+          <h3 className="font-semibold text-rose-900 mb-2">
             {t("contractor:disputeEntry")}
           </h3>
           {disputeOpen && (
-            <label className="block text-sm font-medium mb-3">
+            <label className="block text-sm font-medium text-rose-900 mb-3">
               {t("contractor:disputeReason")}
               <textarea
                 value={reasonText}
                 onChange={(event) => setReasonText(event.target.value)}
                 maxLength={2000}
                 rows={3}
-                className="w-full p-3 border rounded-lg mt-2"
+                className="w-full px-3.5 py-2.5 border border-rose-300 rounded-xl bg-white text-slate-900 mt-2 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
               />
             </label>
           )}
@@ -312,8 +312,8 @@ export default function ContractorPage() {
               ? t("contractor:submitDispute")
               : t("contractor:tapDispute")}
           </Button>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

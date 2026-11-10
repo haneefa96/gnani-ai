@@ -116,10 +116,10 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       : label;
 
   const stateClasses = isActive
-    ? "bg-red-600 text-white ring-4 ring-red-300 scale-105"
+    ? "bg-rose-600 text-white ring-4 ring-rose-500/30 shadow-xl shadow-rose-600/25 scale-[1.03]"
     : isBusy
-      ? "bg-amber-500 text-white cursor-wait"
-      : "bg-emerald-600 hover:bg-emerald-700 text-white";
+      ? "bg-amber-500 text-white shadow-md cursor-wait"
+      : "bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white shadow-lg shadow-emerald-600/25";
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
@@ -135,7 +135,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
         style={{ touchAction: "none" }}
-        className={`flex items-center justify-center gap-3 min-h-[72px] min-w-[220px] px-6 py-4 rounded-full font-semibold text-lg shadow-lg select-none transition-transform focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 disabled:opacity-50 ${stateClasses}`}
+        className={`flex items-center justify-center gap-3 min-h-[68px] min-w-[230px] px-7 py-4 rounded-full font-semibold text-base sm:text-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 disabled:opacity-50 ${stateClasses}`}
       >
         <svg
           aria-hidden="true"
