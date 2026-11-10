@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+
+# Environment
+.env
+.env.local
+
+# Temporary
+tmp/
+temp/
+
+# Generated
+src/generated/

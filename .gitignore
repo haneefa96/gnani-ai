@@ -1,22 +1,45 @@
-# Secrets and local environment overrides
+# Environment and secrets
 .env
 .env.*
+.env.local
 !.env.example
 **/.env
 **/.env.*
 !**/.env.example
 
-# Python caches and virtual environments
+# Python caches, virtualenvs, and packaging
 __pycache__/
 *.py[cod]
+*$py.class
+*.pytest_cache/
 .pytest_cache/
 .venv/
 venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
 
-# Local runtime audio & TTS caches
+# Local SQLite DBs & runtime audio/TTS caches
+*.db
+*.sqlite
+*.sqlite3
 data/
 **/data/
 
-# Node and frontend build artifacts
+# Node / frontend artifacts
 node_modules/
-dist/
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+
+# Logs & OS/IDE
+logs/
+*.log
+.vscode/
+.idea/
+*.swp
+*~

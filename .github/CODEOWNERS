@@ -1,0 +1,33 @@
+# CODEOWNERS for Saakshi project
+# This file maps directories to owners for pull request reviews
+
+# Developer A: Voice and AI (backend and frontend)
+/backend/voice/ @dev-a-team
+/frontend/src/voice/ @dev-a-team
+/frontend/src/pages/contractor/ @dev-a-team
+/contracts/fake_voice.py @dev-a-team
+/contracts/fixtures/ @dev-a-team
+/docs/voice/ @dev-a-team
+
+# Developer B: Product and Data (backend and frontend)
+/backend/app/ @dev-b-team
+/frontend/ @dev-b-team
+/docs/app/ @dev-b-team
+/docs/CHANGELOG.md @dev-a-team @dev-b-team
+
+# Shared contracts (both developers)
+/contracts/ @dev-a-team @dev-b-team
+/docs/*.md @dev-a-team @dev-b-team
+
+# Infrastructure (Developer B)
+/.github/ @dev-b-team
+/docker-compose.yml @dev-b-team
+/Makefile @dev-b-team
+/backend/app/requirements.txt @dev-b-team
+/frontend/package.json @dev-b-team
+
+# Root level (Developer B)
+/.env.example @dev-b-team
+/.gitignore @dev-b-team
+/README.md @dev-b-team
+/PROJECT_SETUP_PROMPT.md @dev-b-team

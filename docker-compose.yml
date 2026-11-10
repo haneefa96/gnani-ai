@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/app/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://saakshi:saakshi@db:5432/saakshi
+      - SECRET_KEY=${SECRET_KEY}
+      - SHARE_TOKEN_EXPIRY_DAYS=3
+      - AUDIO_STORAGE_PATH=/app/data/audio
+      - VOICE_IMPL=${VOICE_IMPL:-fake}
+      - GNANI_STT_API_KEY=${GNANI_STT_API_KEY}
+      - GNANI_TTS_API_KEY=${GNANI_TTS_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_MODEL=${LLM_MODEL}
+    volumes:
+      - ./backend/app:/app
+      - ./data/audio:/app/data/audio
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=saakshi
+      - POSTGRES_PASSWORD=saakshi
+      - POSTGRES_DB=saakshi
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://saakshi.app/schemas/entry_draft.schema.json",
+  "title": "EntryDraft",
+  "description": "A draft entry extracted from worker's voice recording",
+  "type": "object",
+  "required": [
+    "work_date",
+    "site_name",
+    "counterparty_name",
+    "hours",
+    "agreed_amount_inr",
+    "paid_amount_inr",
+    "due_amount_inr",
+    "language",
+    "field_confidence",
+    "needs_clarification",
+    "clarification_question"
+  ],
+  "properties": {
+    "work_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Date of work in YYYY-MM-DD format"
+    },
+    "site_name": {
+      "type": "string",
+      "description": "Name of the work site/location"
+    },
+    "counterparty_name": {
+      "type": "string",
+      "description": "Name of the contractor/supervisor"
+    },
+    "work_type": {
+      "type": "string",
+      "nullable": true,
+      "description": "Type of work performed"
+    },
+    "hours": {
+      "type": "number",
+      "nullable": true,
+      "minimum": 0,
+      "description": "Number of hours worked"
+    },
+    "days": {
+      "type": "number",
+      "nullable": true,
+      "minimum": 0,
+      "description": "Number of days worked"
+    },
+    "agreed_amount_inr": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Amount agreed upon for the work"
+    },
+    "paid_amount_inr": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Amount already paid"
+    },
+    "due_amount_inr": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Amount still due (calculated: agreed - paid)"
+    },
+    "field_confidence": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "description": "Confidence scores for each extracted field (0-1)"
+    },
+    "needs_clarification": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of fields that need clarification"
+    },
+    "clarification_question": {
+      "type": ["string", "null"],
+      "description": "Question to ask worker for clarification, or null if none needed"
+    },
+    "language": {
+      "type": "string",
+      "description": "Language code of the recording (e.g., hi-IN, kn-IN, bn-IN, en-IN)"
+    },
+    "detected_language_code": {
+      "type": ["string", "null"],
+      "description": "Detected language code from STT (may differ from requested)"
+    }
+  },
+  "additionalProperties": false
+}
