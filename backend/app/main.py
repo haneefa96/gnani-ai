@@ -23,7 +23,12 @@ if str(repository_dir) not in sys.path:
 
 from app.config import Settings
 from app.routers import auth, entries, contractor, evidence
+from app.services.audio_store import AppAudioStore
 from app.db import engine, SessionLocal, Base
+from backend.voice.router import (
+    get_audio_store as get_voice_audio_store,
+    router as voice_router,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -59,7 +64,11 @@ def create_application() -> FastAPI:
     application.include_router(entries.router, prefix="/api/entries", tags=["entries"])
     application.include_router(contractor.router, prefix="/api/contractor", tags=["contractor"])
     application.include_router(evidence.router, prefix="/api", tags=["evidence"])
-    
+    application.include_router(voice_router)
+
+    audio_store = AppAudioStore(settings.AUDIO_STORAGE_PATH)
+    application.dependency_overrides[get_voice_audio_store] = lambda: audio_store
+
     return application
 
 

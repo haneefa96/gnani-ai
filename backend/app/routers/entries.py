@@ -47,6 +47,15 @@ class EntryCreate(BaseModel):
     audio_ref: str
     transcript: str
     lang: str
+    audio_sha256: Optional[str] = None
+    work_date: Optional[str] = None
+    site_name: Optional[str] = None
+    counterparty_name: Optional[str] = None
+    work_type: Optional[str] = None
+    hours: Optional[float] = None
+    days: Optional[float] = None
+    agreed_inr: Optional[float] = None
+    paid_inr: Optional[float] = None
 
 
 class EntryCorrect(BaseModel):
@@ -101,27 +110,33 @@ async def create_entry_draft(
     if last_entry:
         prev_hash = last_entry.entry_hash
     
-    # Calculate due amount in code (never from model)
-    agreed_amount = 0
-    paid_amount = 0
-    due_amount = agreed_amount - paid_amount
-    
+    # Always compute due amount in code (never trust client-supplied due_inr).
+    agreed_amount = max(0.0, float(entry_data.agreed_inr or 0.0))
+    paid_amount = max(0.0, float(entry_data.paid_inr or 0.0))
+    due_amount = max(0.0, round(agreed_amount - paid_amount, 2))
+    transcript_sha256 = (
+        hashlib.sha256(entry_data.transcript.encode("utf-8")).hexdigest()
+        if entry_data.transcript
+        else ""
+    )
+
     entry = Entry(
         worker_id=current_worker_id,
         counterparty_id=None,
-        work_date=datetime.utcnow().strftime("%Y-%m-%d"),
-        site_name="",
-        counterparty_name="",
-        hours=0,
-        days=0,
+        work_date=(entry_data.work_date or datetime.utcnow().strftime("%Y-%m-%d")),
+        site_name=entry_data.site_name or "",
+        counterparty_name=entry_data.counterparty_name or "",
+        work_type=entry_data.work_type,
+        hours=entry_data.hours if entry_data.hours is not None else 0,
+        days=entry_data.days if entry_data.days is not None else 0,
         agreed_inr=agreed_amount,
         paid_inr=paid_amount,
         due_inr=due_amount,
         language=entry_data.lang,
         transcript=entry_data.transcript,
-        transcript_sha256="",
+        transcript_sha256=transcript_sha256,
         audio_uri=entry_data.audio_ref,
-        audio_sha256="",
+        audio_sha256=entry_data.audio_sha256 or "",
         prev_hash=prev_hash,
         entry_hash="",  # Will be computed after worker confirmation
         status=Entry.STATUS_DRAFT,

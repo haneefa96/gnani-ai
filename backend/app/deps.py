@@ -31,11 +31,11 @@ def get_db() -> Generator[Session, None, None]:
 def get_voice_service() -> VoiceService:
     """Get voice service implementation."""
     if settings.is_fake_voice:
-        from contracts.fake_voice import FakeVoice
-        return FakeVoice()
+        from backend.voice.fixtures.fake_voice import FakeVoice
+        return FakeVoice()  # type: ignore[return-value]
     else:
         from backend.voice.service import GnaniVoice
-        return GnaniVoice()
+        return GnaniVoice()  # type: ignore[return-value]
 
 
 def get_hashchain_service() -> HashChainService:

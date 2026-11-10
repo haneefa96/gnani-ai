@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import sys
 import zipfile
 from datetime import timedelta
@@ -12,6 +13,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
+os.environ.setdefault("SECRET_KEY", "tests-only-random-secret-key-0123456789abcd")
 
 import main
 from app.models import Base, Entry, EvidencePack

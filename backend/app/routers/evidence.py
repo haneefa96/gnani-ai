@@ -63,6 +63,20 @@ def _parse_iso_date(value: str, field_name: str) -> datetime:
         ) from exc
 
 
+def _resolve_entry_audio_path(audio_uri: Optional[str]) -> Optional[Path]:
+    """Resolve an entry's audio_uri (filesystem path or local:// URI) to an existing file."""
+    if not audio_uri:
+        return None
+    storage_root = Path(settings.AUDIO_STORAGE_PATH).resolve()
+    if audio_uri.startswith("local://"):
+        candidate = (storage_root / audio_uri.removeprefix("local://").lstrip("/")).resolve()
+        if not candidate.is_relative_to(storage_root):
+            return None
+        return candidate if candidate.is_file() else None
+    candidate = Path(audio_uri).resolve()
+    return candidate if candidate.is_file() else None
+
+
 def _resolve_owned_pack_file(
     pack_id: int,
     uri_attr: Literal["pdf_uri", "zip_uri"],
@@ -176,10 +190,11 @@ async def build_evidence_pack(
 
         added_audio: set[str] = set()
         for e in entries:
-            if e.audio_uri and os.path.isfile(e.audio_uri):
-                arcname = f"audio/{e.id}_{os.path.basename(e.audio_uri)}"
+            audio_path = _resolve_entry_audio_path(e.audio_uri)
+            if audio_path is not None:
+                arcname = f"audio/{e.id}_{audio_path.name}"
                 if arcname not in added_audio:
-                    zf.write(e.audio_uri, arcname)
+                    zf.write(str(audio_path), arcname)
                     added_audio.add(arcname)
 
     hashchain = HashChainService()
