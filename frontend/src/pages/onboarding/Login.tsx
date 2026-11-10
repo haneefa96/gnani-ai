@@ -61,23 +61,8 @@ export default function Login({
           aria-hidden="true"
           className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent"
         />
-        <div className="flex flex-col items-center mb-6">
-          <div
-            aria-hidden="true"
-            className="w-12 h-12 rounded-2xl bg-zinc-950 border border-cyan-400/30 text-cyan-300 flex items-center justify-center shadow-[0_0_24px_-4px_rgba(34,211,238,0.35)] mb-3.5"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="w-6 h-6 fill-none stroke-current"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-white text-center tracking-tight">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-white tracking-tight">
             {t('onboarding:welcomeBack')}
           </h1>
         </div>

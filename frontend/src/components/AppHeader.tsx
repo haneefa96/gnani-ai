@@ -53,18 +53,9 @@ export function AppHeader({
           ) : (
             <div
               aria-hidden="true"
-              className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400/15 to-emerald-400/15 border border-cyan-400/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]"
+              className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400 text-zinc-950 font-extrabold text-sm flex items-center justify-center shrink-0"
             >
-              <svg
-                viewBox="0 0 24 24"
-                className="w-4 h-4 text-cyan-300 fill-none stroke-current"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
+              S
             </div>
           )}
           <div className="min-w-0">

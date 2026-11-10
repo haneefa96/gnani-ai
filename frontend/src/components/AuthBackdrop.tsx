@@ -97,33 +97,9 @@ export function AuthBackdrop({ children }: AuthBackdropProps) {
         </svg>
       </div>
 
-      {/* Brand pill */}
-      <div className="relative z-10 mb-5 flex items-center gap-2.5 rounded-full border border-white/10 bg-zinc-900/80 px-4 py-1.5 text-xs font-medium text-zinc-200 backdrop-blur-md shadow-[0_0_24px_-6px_rgba(34,211,238,0.3)]">
-        <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
-        <span className="tracking-wide">Saakshi</span>
-        <span className="text-zinc-600">·</span>
-        <span className="text-cyan-300/90 font-mono text-[11px]">VOICE WAGE LEDGER</span>
-      </div>
-
       {/* Main dark obsidian glass card container */}
       <div className="relative z-10 w-full max-w-md animate-fade-up">
         {children}
-      </div>
-
-      {/* Reassuring monochrome + cyan/emerald footer badges */}
-      <div
-        aria-hidden="true"
-        className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-4 text-[11px] font-medium text-zinc-500"
-      >
-        <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-cyan-400/80" />
-          4 Indian Languages
-        </span>
-        <span className="text-zinc-700">/</span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-          Hash-Chained Proof
-        </span>
       </div>
     </div>
   )

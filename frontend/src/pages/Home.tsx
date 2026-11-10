@@ -238,10 +238,6 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
             aria-hidden="true"
             className="pointer-events-none absolute -top-20 left-1/2 h-44 w-80 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl"
           />
-          <div className="relative z-10 inline-flex items-center gap-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/25 px-3 py-1 text-[11px] font-mono font-semibold uppercase tracking-wider text-cyan-300 mb-3">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
-            Voice-First Wage Ledger
-          </div>
           <h2 className="relative z-10 text-lg sm:text-xl font-semibold text-white mb-5">
             {t("home:description")}
           </h2>
