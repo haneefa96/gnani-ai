@@ -71,7 +71,9 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({
     const token = playTokenRef.current;
     onStartRef.current?.();
 
-    const base = apiBaseUrl.replace(/\/+$/, "");
+    const base = (apiBaseUrl || import.meta.env.VITE_API_URL || "")
+      .trim()
+      .replace(/\/+$/, "");
     for (const item of currentItems) {
       if (playTokenRef.current !== token) {
         return;

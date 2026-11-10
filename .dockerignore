@@ -1,0 +1,17 @@
+.git
+.env
+.env.*
+backend/voice/.env
+backend/voice/.env.*
+frontend/node_modules
+frontend/dist
+data
+*.db
+*.sqlite
+*.pdf
+*.zip
+__pycache__
+.pytest_cache
+.venv
+venv
+

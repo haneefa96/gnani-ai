@@ -1,0 +1,3 @@
+-r backend/app/requirements.txt
+-r backend/voice/requirements.txt
+

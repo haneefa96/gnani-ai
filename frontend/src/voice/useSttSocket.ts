@@ -24,9 +24,18 @@ function resolveWsUrl(options: UseSttSocketOptions): string {
     params.set("keyterms", JSON.stringify(options.keyterms));
   }
 
-  if (options.wsBaseUrl) {
-    const trimmed = options.wsBaseUrl.replace(/\/+$/, "");
-    return `${trimmed}/ws/stt?${params.toString()}`;
+  const envWsBase = (import.meta.env.VITE_WS_URL || "")
+    .trim()
+    .replace(/\/+$/, "");
+  const envApiBase = (import.meta.env.VITE_API_URL || "")
+    .trim()
+    .replace(/\/+$/, "");
+  const explicitBase = options.wsBaseUrl
+    ? options.wsBaseUrl.replace(/\/+$/, "")
+    : envWsBase || (envApiBase ? envApiBase.replace(/^http/i, "ws") : "");
+
+  if (explicitBase) {
+    return `${explicitBase}/ws/stt?${params.toString()}`;
   }
 
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";

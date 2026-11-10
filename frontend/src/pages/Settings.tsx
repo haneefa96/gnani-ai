@@ -85,11 +85,12 @@ export default function Settings({
         title={t('settings:title')}
         onBack={() => navigate('/home')}
         backLabel={t('common:back')}
+        showNav
       />
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Worker info */}
-        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+        <section className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-semibold text-slate-900">
               {t('settings:workerInfo')}

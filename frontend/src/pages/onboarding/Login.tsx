@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { AuthBackdrop } from '../../components/AuthBackdrop'
 import { Button } from '../../components/Button'
 import {
   getApiErrorMessage,
@@ -54,12 +55,12 @@ export default function Login({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
+    <AuthBackdrop>
+      <div className="w-full bg-white/95 backdrop-blur-xl rounded-3xl border border-white/25 shadow-2xl p-6 sm:p-8">
         <div className="flex flex-col items-center mb-6">
           <div
             aria-hidden="true"
-            className="w-12 h-12 rounded-2xl bg-indigo-950 text-emerald-300 flex items-center justify-center shadow-sm mb-3"
+            className="w-12 h-12 rounded-2xl bg-indigo-950 text-emerald-300 flex items-center justify-center shadow-md mb-3"
           >
             <svg
               viewBox="0 0 24 24"
@@ -135,6 +136,6 @@ export default function Login({
           </p>
         </div>
       </div>
-    </div>
+    </AuthBackdrop>
   )
 }

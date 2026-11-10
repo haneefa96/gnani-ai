@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { AuthBackdrop } from '../../components/AuthBackdrop'
 import { Button } from '../../components/Button'
 
 interface ContractorResultState {
@@ -20,8 +21,8 @@ export default function ContractorThanks() {
   const submission = result && status ? { result, status } : null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 text-center">
+    <AuthBackdrop>
+      <div className="w-full bg-white/95 backdrop-blur-xl rounded-3xl border border-white/25 shadow-2xl p-6 sm:p-8 text-center">
         {submission && (
           <div
             aria-hidden="true"
@@ -56,6 +57,6 @@ export default function ContractorThanks() {
           {submission ? t('common:back') : t('contractor:returnToEntry')}
         </Button>
       </div>
-    </div>
+    </AuthBackdrop>
   )
 }

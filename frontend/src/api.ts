@@ -92,7 +92,19 @@ interface StoredProfile {
   language?: unknown;
 }
 
-export const api = axios.create({ baseURL: "/api" });
+export const API_BASE_URL = (import.meta.env.VITE_API_URL || "")
+  .trim()
+  .replace(/\/+$/, "");
+
+export function resolveApiUrl(path: string): string {
+  if (!API_BASE_URL || /^https?:\/\//i.test(path)) {
+    return path;
+  }
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${normalized}`;
+}
+
+export const api = axios.create({ baseURL: resolveApiUrl("/api") });
 
 export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -321,6 +333,11 @@ export async function createEntryDraft(
 
 export async function confirmEntry(entryId: number): Promise<WageEntry> {
   const response = await api.post<WageEntry>(`/entries/${entryId}/confirm`);
+  return response.data;
+}
+
+export async function shareEntry(entryId: number): Promise<{ share_url: string }> {
+  const response = await api.post<{ share_url: string }>(`/entries/${entryId}/share`);
   return response.data;
 }
 

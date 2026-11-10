@@ -164,11 +164,12 @@ export default function ExportScreen() {
         title={t("export:title")}
         onBack={() => navigate("/home")}
         backLabel={t("common:back")}
+        showNav
       />
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Hash Chain Verification Card */}
-        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+        <section className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-base font-semibold text-slate-900">
               {t("export:verificationTitle", "Ledger Hash-Chain Verification")}
@@ -265,7 +266,7 @@ export default function ExportScreen() {
         {packState === "success" && pack && (
           <section
             data-testid="pack-success"
-            className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 text-center space-y-4"
+            className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 text-center space-y-4"
           >
             <div
               aria-hidden="true"

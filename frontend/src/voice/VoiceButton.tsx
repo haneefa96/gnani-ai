@@ -116,36 +116,70 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       : label;
 
   const stateClasses = isActive
-    ? "bg-rose-600 text-white ring-4 ring-rose-500/30 shadow-xl shadow-rose-600/25 scale-[1.03]"
+    ? "bg-rose-600 text-white ring-4 ring-rose-400/40 shadow-xl shadow-rose-600/30 scale-[1.03]"
     : isBusy
       ? "bg-amber-500 text-white shadow-md cursor-wait"
-      : "bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white shadow-lg shadow-emerald-600/25";
+      : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.98] text-white shadow-lg shadow-emerald-600/25";
 
   return (
-    <div className={`flex flex-col items-center gap-2 ${className}`}>
-      <button
-        type="button"
-        disabled={disabled || isBusy}
-        aria-pressed={isActive}
-        aria-label={currentText}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerRelease}
-        onPointerCancel={handlePointerRelease}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        style={{ touchAction: "none" }}
-        className={`flex items-center justify-center gap-3 min-h-[68px] min-w-[230px] px-7 py-4 rounded-full font-semibold text-base sm:text-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 disabled:opacity-50 ${stateClasses}`}
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="w-7 h-7 fill-current shrink-0"
+    <div className={`relative flex flex-col items-center gap-3 ${className}`}>
+      <div className="relative inline-flex items-center justify-center">
+        {isActive && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-2 rounded-full bg-rose-500/25 animate-ping"
+          />
+        )}
+        <button
+          type="button"
+          disabled={disabled || isBusy}
+          aria-pressed={isActive}
+          aria-label={currentText}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerRelease}
+          onPointerCancel={handlePointerRelease}
+          onClick={handleClick}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
+          style={{ touchAction: "none" }}
+          className={`relative flex items-center justify-center gap-3 min-h-[68px] min-w-[236px] px-7 py-4 rounded-full font-semibold text-base sm:text-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 disabled:opacity-50 ${stateClasses}`}
         >
-          <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V20h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0z" />
-        </svg>
-        <span>{currentText}</span>
-      </button>
+          {isBusy ? (
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="w-6 h-6 animate-spin fill-none stroke-current shrink-0"
+              strokeWidth={2.5}
+            >
+              <circle cx="12" cy="12" r="9" className="opacity-25" />
+              <path d="M21 12a9 9 0 0 0-9-9" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="w-7 h-7 fill-current shrink-0"
+            >
+              <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V20h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0z" />
+            </svg>
+          )}
+          <span>{currentText}</span>
+        </button>
+      </div>
+      {isActive && (
+        <div
+          aria-hidden="true"
+          className="flex items-center gap-1 h-5"
+        >
+          {[0, 120, 240, 120, 0].map((delay, idx) => (
+            <span
+              key={idx}
+              style={{ animationDelay: `${delay}ms` }}
+              className="w-1 h-4 rounded-full bg-rose-500 animate-wave-bar"
+            />
+          ))}
+        </div>
+      )}
       <span className="sr-only" aria-live="polite">
         {currentText}
       </span>

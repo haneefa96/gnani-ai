@@ -53,8 +53,9 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "ollama"
     LLM_MODEL: str = ""
     
-    # CORS
+    # CORS & deployed frontend URL
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    FRONTEND_URL: str = "http://localhost:5173"
     
     @property
     def is_fake_voice(self) -> bool:

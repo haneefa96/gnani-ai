@@ -783,6 +783,6 @@ async def share_entry(
     db.commit()
     
     # Build share URL
-    share_url = f"http://localhost:5173/c/{token}"
-    
+    share_url = f"{settings.FRONTEND_URL.rstrip('/')}/c/{token}"
+
     return {"share_url": share_url}

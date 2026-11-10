@@ -1,4 +1,9 @@
-import { AUTH_EXPIRED_EVENT, clearAuthSession, getAccessToken } from "../api";
+import {
+  AUTH_EXPIRED_EVENT,
+  clearAuthSession,
+  getAccessToken,
+  resolveApiUrl,
+} from "../api";
 
 export interface VerificationResult {
   valid: boolean;
@@ -137,7 +142,7 @@ function parseFilename(
 export async function verifyLedgerChain(): Promise<VerificationResult> {
   let response: Response;
   try {
-    response = await fetch("/api/verify", {
+    response = await fetch(resolveApiUrl("/api/verify"), {
       method: "GET",
       headers: buildAuthHeaders(),
     });
@@ -163,7 +168,7 @@ export async function generateEvidencePack(
 ): Promise<EvidencePackResponse> {
   let response: Response;
   try {
-    response = await fetch("/api/evidence", {
+    response = await fetch(resolveApiUrl("/api/evidence"), {
       method: "POST",
       headers: buildAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
@@ -193,7 +198,7 @@ export async function downloadEvidenceFile(
 ): Promise<string> {
   let response: Response;
   try {
-    response = await fetch(downloadUrl, {
+    response = await fetch(resolveApiUrl(downloadUrl), {
       method: "GET",
       headers: buildAuthHeaders(),
     });

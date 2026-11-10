@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { shareEntry } from '../api'
 import { AppHeader } from '../components/AppHeader'
 import { Button } from '../components/Button'
 import { StatusBadge } from '../components/StatusBadge'
@@ -9,6 +11,40 @@ export default function History() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { entries, loading, error, refresh } = useEntries()
+  const [sharingId, setSharingId] = useState<number | null>(null)
+  const [shareUrls, setShareUrls] = useState<Record<number, string>>({})
+  const [shareErrors, setShareErrors] = useState<Record<number, string>>({})
+  const [copiedId, setCopiedId] = useState<number | null>(null)
+
+  const handleShare = async (entryId: number) => {
+    setSharingId(entryId)
+    setShareErrors((prev) => {
+      const next = { ...prev }
+      delete next[entryId]
+      return next
+    })
+    try {
+      const { share_url } = await shareEntry(entryId)
+      setShareUrls((prev) => ({ ...prev, [entryId]: share_url }))
+    } catch {
+      setShareErrors((prev) => ({
+        ...prev,
+        [entryId]: t('common:error', 'Could not create link'),
+      }))
+    } finally {
+      setSharingId(null)
+    }
+  }
+
+  const handleCopy = async (entryId: number, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedId(entryId)
+      window.setTimeout(() => setCopiedId((id) => (id === entryId ? null : id)), 2000)
+    } catch {
+      // Fallback: URL remains visible & selectable for manual copy
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -16,6 +52,7 @@ export default function History() {
         title={t('history:title')}
         onBack={() => navigate('/home')}
         backLabel={t('common:back')}
+        showNav
       />
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
@@ -44,10 +81,14 @@ export default function History() {
               </div>
             ) : (
               <div className="space-y-3.5">
-                {entries.map((entry) => (
+                {entries.map((entry) => {
+                  const shareUrl = shareUrls[entry.id]
+                  const shareErr = shareErrors[entry.id]
+                  const isSharing = sharingId === entry.id
+                  return (
                   <article
                     key={entry.id}
-                    className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5"
+                    className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow p-5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                       <div className="flex items-center gap-2">
@@ -101,8 +142,62 @@ export default function History() {
                         </div>
                       </div>
                     </div>
+
+                    {entry.status === 'WORKER_CONFIRMED' && (
+                      <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                        {!shareUrl ? (
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-xs text-slate-500">
+                              Ready for contractor confirmation
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => void handleShare(entry.id)}
+                              disabled={isSharing}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
+                            >
+                              {isSharing ? t('common:loading') : 'Get Contractor Link'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-2.5 flex flex-wrap items-center justify-between gap-2">
+                            <input
+                              type="text"
+                              readOnly
+                              value={shareUrl}
+                              aria-label="Contractor link"
+                              onClick={(e) => e.currentTarget.select()}
+                              className="min-w-0 flex-1 bg-transparent text-xs text-slate-700 font-mono focus:outline-none"
+                            />
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => void handleCopy(entry.id, shareUrl)}
+                                className="rounded-lg bg-white border border-slate-200 hover:bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors"
+                              >
+                                {copiedId === entry.id ? 'Copied' : 'Copy'}
+                              </button>
+                              <a
+                                href={shareUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-lg bg-indigo-700 hover:bg-indigo-800 px-2.5 py-1 text-xs font-medium text-white transition-colors"
+                              >
+                                Open
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                        {shareErr && (
+                          <p role="alert" className="text-xs text-rose-700">
+                            {shareErr}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </article>
-                ))}
+                  )
+                })}
               </div>
             )}
           </>

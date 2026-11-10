@@ -1,23 +1,35 @@
 import React from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 interface AppHeaderProps {
   title: string
   subtitle?: string
   onBack?: () => void
   backLabel?: string
+  showNav?: boolean
   rightSlot?: React.ReactNode
 }
+
+const NAV_ITEMS = [
+  { path: '/home', label: 'Home' },
+  { path: '/history', label: 'History' },
+  { path: '/export', label: 'Export' },
+] as const
 
 export function AppHeader({
   title,
   subtitle,
   onBack,
   backLabel = 'Back',
+  showNav = false,
   rightSlot,
 }: AppHeaderProps) {
+  const navigate = useNavigate()
+  const location = useLocation()
+
   return (
-    <header className="sticky top-0 z-20 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-sm">
-      <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur-md border-b border-white/10 text-white shadow-sm">
+      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {onBack ? (
             <button
@@ -62,9 +74,60 @@ export function AppHeader({
             )}
           </div>
         </div>
-        {rightSlot && <div className="shrink-0">{rightSlot}</div>}
+
+        <div className="flex items-center gap-2 shrink-0">
+          {showNav && (
+            <nav
+              aria-label="Primary"
+              className="hidden sm:flex items-center gap-1 rounded-xl bg-white/10 p-1"
+            >
+              {NAV_ITEMS.map((item) => {
+                const active = location.pathname === item.path
+                return (
+                  <button
+                    key={item.path}
+                    type="button"
+                    onClick={() => navigate(item.path)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      active
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-indigo-100 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                )
+              })}
+            </nav>
+          )}
+          {rightSlot}
+        </div>
       </div>
+
+      {showNav && (
+        <nav
+          aria-label="Mobile Navigation"
+          className="sm:hidden border-t border-white/10 px-4 py-1.5 flex items-center gap-1.5"
+        >
+          {NAV_ITEMS.map((item) => {
+            const active = location.pathname === item.path
+            return (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => navigate(item.path)}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-medium text-center transition-colors ${
+                  active
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-indigo-100 hover:bg-white/10'
+                }`}
+              >
+                {item.label}
+              </button>
+            )
+          })}
+        </nav>
+      )}
     </header>
   )
 }
-

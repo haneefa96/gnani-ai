@@ -7,8 +7,9 @@ Developer B: Product and Data
 import os
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 import sys
 from pathlib import Path
@@ -68,6 +69,27 @@ def create_application() -> FastAPI:
 
     audio_store = AppAudioStore(settings.AUDIO_STORAGE_PATH)
     application.dependency_overrides[get_voice_audio_store] = lambda: audio_store
+
+    @application.get("/api/health", tags=["health"])
+    async def health_check() -> dict[str, str]:
+        return {"status": "ok"}
+
+    dist_dir = (repository_dir / "frontend" / "dist").resolve()
+    dist_index = dist_dir / "index.html"
+    if dist_index.is_file():
+        @application.get("/{full_path:path}", include_in_schema=False)
+        async def serve_spa(full_path: str) -> FileResponse:
+            clean = full_path.lstrip("/")
+            if (
+                clean in {"api", "ws", "docs", "redoc", "openapi.json"}
+                or clean.startswith(("api/", "ws/"))
+            ):
+                raise HTTPException(status_code=404, detail="Not Found")
+            if clean:
+                candidate = (dist_dir / clean).resolve()
+                if candidate.is_relative_to(dist_dir) and candidate.is_file():
+                    return FileResponse(candidate)
+            return FileResponse(dist_index)
 
     return application
 
