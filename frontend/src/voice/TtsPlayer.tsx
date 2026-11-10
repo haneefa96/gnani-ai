@@ -180,12 +180,12 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({
         onClick={() => void playSequence()}
         disabled={isLoading}
         aria-busy={isLoading}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white text-sm font-medium hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 disabled:opacity-50"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-100 text-sm font-medium hover:bg-zinc-800 hover:border-cyan-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 disabled:opacity-50 transition-colors"
       >
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
-          className="w-4 h-4 fill-current"
+          className="w-4 h-4 fill-current text-cyan-400"
         >
           <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
         </svg>
@@ -196,7 +196,7 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({
         <button
           type="button"
           onClick={stopPlayback}
-          className="px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-300 text-sm font-medium hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 transition-colors"
         >
           {stopLabel}
         </button>

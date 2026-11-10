@@ -116,10 +116,10 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       : label;
 
   const stateClasses = isActive
-    ? "bg-rose-600 text-white ring-4 ring-rose-400/40 shadow-xl shadow-rose-600/30 scale-[1.03]"
+    ? "bg-rose-600 text-white ring-4 ring-rose-500/35 shadow-[0_0_32px_-4px_rgba(244,63,94,0.65)] scale-[1.03]"
     : isBusy
-      ? "bg-amber-500 text-white shadow-md cursor-wait"
-      : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.98] text-white shadow-lg shadow-emerald-600/25";
+      ? "bg-amber-400 text-zinc-950 shadow-[0_0_24px_-4px_rgba(251,191,36,0.5)] cursor-wait"
+      : "bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 active:scale-[0.98] text-zinc-950 shadow-[0_0_36px_-6px_rgba(34,211,238,0.55)]";
 
   return (
     <div className={`relative flex flex-col items-center gap-3 ${className}`}>
@@ -142,7 +142,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           style={{ touchAction: "none" }}
-          className={`relative flex items-center justify-center gap-3 min-h-[68px] min-w-[236px] px-7 py-4 rounded-full font-semibold text-base sm:text-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 disabled:opacity-50 ${stateClasses}`}
+          className={`relative flex items-center justify-center gap-3 min-h-[68px] min-w-[236px] px-7 py-4 rounded-full font-semibold text-base sm:text-lg select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-400/50 disabled:opacity-50 ${stateClasses}`}
         >
           {isBusy ? (
             <svg
@@ -175,7 +175,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
             <span
               key={idx}
               style={{ animationDelay: `${delay}ms` }}
-              className="w-1 h-4 rounded-full bg-rose-500 animate-wave-bar"
+              className="w-1 h-4 rounded-full bg-rose-400 animate-wave-bar"
             />
           ))}
         </div>

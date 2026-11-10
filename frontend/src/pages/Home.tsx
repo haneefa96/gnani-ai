@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../components/AppHeader";
+import { AppShell } from "../components/AppShell";
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/StatusBadge";
 import { TtsPlayer } from "../voice/TtsPlayer";
@@ -203,7 +204,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
       : draft?.due_amount_inr ?? 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <AppShell>
       <AppHeader
         title="Saakshi"
         subtitle={t("home:worker", { worker: worker.alias })}
@@ -213,7 +214,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
             type="button"
             onClick={() => navigate("/settings")}
             aria-label={t("common:settings")}
-            className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
           >
             <svg
               aria-hidden="true"
@@ -232,12 +233,16 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Hero voice recorder */}
-        <section className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-7 text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 mb-3">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <section className="animate-fade-up relative overflow-hidden obsidian-card rounded-2xl p-6 sm:p-7 text-center">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-20 left-1/2 h-44 w-80 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl"
+          />
+          <div className="relative z-10 inline-flex items-center gap-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/25 px-3 py-1 text-[11px] font-mono font-semibold uppercase tracking-wider text-cyan-300 mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
             Voice-First Wage Ledger
           </div>
-          <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-5">
+          <h2 className="relative z-10 text-lg sm:text-xl font-semibold text-white mb-5">
             {t("home:description")}
           </h2>
 
@@ -261,42 +266,42 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
           {(voiceStatus !== "idle" || extracting) && (
             <div className="mt-3">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-medium bg-zinc-900 text-cyan-300 border border-zinc-800">
                 {extracting ? t("common:loading") : voiceStatus}
               </span>
             </div>
           )}
 
-          <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-left">
-            <div className="flex items-start gap-2.5 rounded-xl bg-slate-50/90 border border-slate-200/60 px-3 py-2.5">
-              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">
+          <div className="mt-6 pt-5 border-t border-white/[0.08] grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-left">
+            <div className="flex items-start gap-2.5 rounded-xl bg-zinc-950/70 border border-white/[0.06] px-3 py-2.5">
+              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 text-xs font-mono font-bold">
                 1
               </span>
               <div>
-                <div className="text-xs font-semibold text-slate-800">Hold &amp; speak</div>
-                <div className="text-[11px] text-slate-500 leading-snug">
+                <div className="text-xs font-semibold text-zinc-100">Hold &amp; speak</div>
+                <div className="text-[11px] text-zinc-400 leading-snug">
                   Say site, contractor, hours &amp; pay
                 </div>
               </div>
             </div>
-            <div className="flex items-start gap-2.5 rounded-xl bg-slate-50/90 border border-slate-200/60 px-3 py-2.5">
-              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 text-xs font-bold">
+            <div className="flex items-start gap-2.5 rounded-xl bg-zinc-950/70 border border-white/[0.06] px-3 py-2.5">
+              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-400/15 border border-sky-400/30 text-sky-300 text-xs font-mono font-bold">
                 2
               </span>
               <div>
-                <div className="text-xs font-semibold text-slate-800">Check or edit</div>
-                <div className="text-[11px] text-slate-500 leading-snug">
+                <div className="text-xs font-semibold text-zinc-100">Check or edit</div>
+                <div className="text-[11px] text-zinc-400 leading-snug">
                   Review extracted draft fields
                 </div>
               </div>
             </div>
-            <div className="flex items-start gap-2.5 rounded-xl bg-slate-50/90 border border-slate-200/60 px-3 py-2.5">
-              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 text-xs font-bold">
+            <div className="flex items-start gap-2.5 rounded-xl bg-zinc-950/70 border border-white/[0.06] px-3 py-2.5">
+              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-400/15 border border-emerald-400/30 text-emerald-300 text-xs font-mono font-bold">
                 3
               </span>
               <div>
-                <div className="text-xs font-semibold text-slate-800">Confirm &amp; export</div>
-                <div className="text-[11px] text-slate-500 leading-snug">
+                <div className="text-xs font-semibold text-zinc-100">Confirm &amp; export</div>
+                <div className="text-[11px] text-zinc-400 leading-snug">
                   Lock proof &amp; download PDF/ZIP
                 </div>
               </div>
@@ -307,7 +312,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         {voiceError && (
           <div
             role="alert"
-            className="animate-fade-up bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm"
+            className="animate-fade-up bg-rose-500/10 border border-rose-500/30 text-rose-300 px-4 py-3 rounded-xl text-sm"
           >
             {voiceError}
           </div>
@@ -316,7 +321,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         {saveNotice && (
           <div
             role="status"
-            className="animate-fade-up bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-medium"
+            className="animate-fade-up bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-xl text-sm font-medium"
           >
             {saveNotice}
           </div>
@@ -324,13 +329,13 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
         {draft && review && (
           <section
-            className="animate-fade-up bg-white rounded-2xl border border-indigo-200 shadow-sm p-5 sm:p-6 space-y-4"
+            className="animate-fade-up obsidian-card rounded-2xl border-cyan-400/30 p-5 sm:p-6 space-y-4"
             aria-labelledby="voice-review-title"
           >
             <div className="flex justify-between items-center">
               <h3
                 id="voice-review-title"
-                className="font-semibold text-base text-slate-900"
+                className="font-semibold text-base text-white"
               >
                 Voice Entry Draft
               </h3>
@@ -344,25 +349,25 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   setVoiceError("");
                 }}
                 disabled={saving}
-                className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                className="text-xs font-medium text-zinc-400 hover:text-white transition-colors"
               >
                 {t("common:cancel", "Cancel")}
               </button>
             </div>
 
-            <p className="border-l-4 border-indigo-300 rounded-r-xl bg-slate-50 px-3.5 py-2.5 text-xs text-slate-700 italic">
+            <p className="border-l-2 border-cyan-400 rounded-r-xl bg-zinc-950/80 px-3.5 py-2.5 text-xs text-zinc-300 italic">
               &ldquo;{transcript}&rdquo;
             </p>
 
             {(draft.clarification_question ||
               draft.needs_clarification.length > 0) && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-2.5 text-sm">
-                <p className="font-medium text-amber-900">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5 text-sm">
+                <p className="font-medium text-amber-200">
                   {draft.clarification_question ||
                     "Please review the details marked for clarification."}
                 </p>
                 {draft.needs_clarification.length > 0 && (
-                  <p className="text-xs text-amber-800">
+                  <p className="text-xs text-amber-300/90">
                     Review fields: {draft.needs_clarification.join(", ")}
                   </p>
                 )}
@@ -391,7 +396,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
             <div className="grid gap-3 sm:grid-cols-2 text-sm">
               <label className="text-left">
-                <span className="font-medium text-slate-700">Work date *</span>
+                <span className="font-medium text-zinc-300">Work date *</span>
                 <input
                   type="date"
                   required
@@ -399,41 +404,41 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("work_date", event.target.value)
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="font-medium text-slate-700">Contractor</span>
+                <span className="font-medium text-zinc-300">Contractor</span>
                 <input
                   value={review.counterparty_name}
                   onChange={(event) =>
                     updateReview("counterparty_name", event.target.value)
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="font-medium text-slate-700">Work site</span>
+                <span className="font-medium text-zinc-300">Work site</span>
                 <input
                   value={review.site_name}
                   onChange={(event) =>
                     updateReview("site_name", event.target.value)
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="font-medium text-slate-700">Work type</span>
+                <span className="font-medium text-zinc-300">Work type</span>
                 <input
                   value={review.work_type}
                   onChange={(event) =>
                     updateReview("work_type", event.target.value)
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="font-medium text-slate-700">Hours</span>
+                <span className="font-medium text-zinc-300">Hours</span>
                 <input
                   type="number"
                   min="0"
@@ -442,22 +447,22 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("hours", event.target.value)
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 tabular-nums focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="font-medium text-slate-700">Days</span>
+                <span className="font-medium text-zinc-300">Days</span>
                 <input
                   type="number"
                   min="0"
                   step="0.25"
                   value={review.days}
                   onChange={(event) => updateReview("days", event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 tabular-nums focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="font-medium text-slate-700">
+                <span className="font-medium text-zinc-300">
                   Agreed (INR) *
                 </span>
                 <input
@@ -469,11 +474,11 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("agreed_amount_inr", event.target.value)
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 tabular-nums focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
               <label className="text-left">
-                <span className="font-medium text-slate-700">Paid (INR) *</span>
+                <span className="font-medium text-zinc-300">Paid (INR) *</span>
                 <input
                   type="number"
                   min="0"
@@ -483,14 +488,14 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                   onChange={(event) =>
                     updateReview("paid_amount_inr", event.target.value)
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 tabular-nums focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 text-zinc-100 tabular-nums focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </label>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200/80 px-4 py-2.5 text-sm">
-              <span className="text-slate-600">Due</span>
-              <span className="text-base font-bold text-slate-900 tabular-nums">
+            <div className="flex items-center justify-between rounded-xl bg-zinc-950/80 border border-white/[0.08] px-4 py-2.5 text-sm">
+              <span className="text-zinc-400">Due</span>
+              <span className="text-base font-bold text-cyan-300 tabular-nums">
                 ₹{computedDue}
               </span>
             </div>
@@ -507,33 +512,33 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
         {/* Quick stats */}
         <section className="animate-fade-up grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-2xl border border-slate-200/80 border-t-2 border-t-indigo-500 p-4 shadow-sm hover:shadow-md transition-shadow text-center">
-            <div className="text-lg sm:text-xl font-bold text-indigo-700 tabular-nums">
+          <div className="obsidian-card rounded-2xl border-t-2 border-t-cyan-400 p-4 text-center hover:border-white/20 transition-colors">
+            <div className="text-lg sm:text-xl font-bold text-cyan-300 tabular-nums">
               {loading || error
                 ? "—"
                 : t("home:entries", { count: entries.length })}
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-zinc-400 mt-1">
               {t("home:totalEntries")}
             </div>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200/80 border-t-2 border-t-emerald-500 p-4 shadow-sm hover:shadow-md transition-shadow text-center">
-            <div className="text-lg sm:text-xl font-bold text-emerald-700 tabular-nums">
+          <div className="obsidian-card rounded-2xl border-t-2 border-t-emerald-400 p-4 text-center hover:border-white/20 transition-colors">
+            <div className="text-lg sm:text-xl font-bold text-emerald-300 tabular-nums">
               {loading || error || latestDue === undefined
                 ? "—"
                 : t("home:dueAmount", { amount: latestDue })}
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-zinc-400 mt-1">
               {t("home:latestEntryDue")}
             </div>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200/80 border-t-2 border-t-amber-500 p-4 shadow-sm hover:shadow-md transition-shadow text-center">
-            <div className="text-lg sm:text-xl font-bold text-amber-600 tabular-nums">
+          <div className="obsidian-card rounded-2xl border-t-2 border-t-amber-400 p-4 text-center hover:border-white/20 transition-colors">
+            <div className="text-lg sm:text-xl font-bold text-amber-300 tabular-nums">
               {loading || error
                 ? "—"
                 : t("home:unconfirmed", { count: unconfirmedCount })}
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-zinc-400 mt-1">
               {t("home:unconfirmedEntries")}
             </div>
           </div>
@@ -542,28 +547,28 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         {/* Recent entries */}
         <section>
           <div className="flex justify-between items-center mb-3 px-1">
-            <h3 className="text-base font-semibold text-slate-900">
+            <h3 className="text-base font-semibold text-white">
               {t("home:recentEntries")}
             </h3>
             <button
               type="button"
               onClick={() => navigate("/history")}
-              className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
+              className="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               {t("home:viewAll")}
             </button>
           </div>
           <div
-            className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4"
+            className="obsidian-card rounded-2xl p-4"
             aria-live="polite"
           >
             {loading ? (
-              <div className="text-center text-slate-500 py-8 text-sm">
+              <div className="text-center text-zinc-400 py-8 text-sm">
                 {t("common:loading")}
               </div>
             ) : error ? (
               <div className="text-center py-6">
-                <p role="alert" className="text-rose-700 text-sm mb-3">
+                <p role="alert" className="text-rose-300 text-sm mb-3">
                   {error}
                 </p>
                 <Button
@@ -575,26 +580,26 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                 </Button>
               </div>
             ) : entries.length === 0 ? (
-              <div className="text-center text-slate-500 py-8 text-sm">
+              <div className="text-center text-zinc-400 py-8 text-sm">
                 {t("home:noEntriesYet")}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-white/[0.06]">
                 {entries.slice(0, 3).map((entry) => (
                   <div
                     key={entry.id}
                     className="py-3 first:pt-1 last:pb-1 flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <div className="font-medium text-slate-900 truncate">
+                      <div className="font-medium text-zinc-100 truncate">
                         {entry.site_name || "—"}
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5 tabular-nums truncate">
+                      <div className="text-xs text-zinc-400 mt-0.5 tabular-nums truncate">
                         {entry.work_date} · {entry.counterparty_name || "—"}
                       </div>
                     </div>
                     <div className="text-right shrink-0 space-y-1">
-                      <div className="font-semibold text-slate-900 text-sm tabular-nums">
+                      <div className="font-semibold text-zinc-100 text-sm tabular-nums">
                         {t("home:dueAmount", { amount: entry.due_inr })}
                       </div>
                       <div>
@@ -610,19 +615,19 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
         {/* Evidence pack */}
         <section>
-          <h3 className="text-base font-semibold text-slate-900 mb-3 px-1">
+          <h3 className="text-base font-semibold text-white mb-3 px-1">
             {t("home:evidencePack")}
           </h3>
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <div className="obsidian-card rounded-2xl p-5">
             <Button onClick={() => navigate("/export")} className="w-full">
               {t("home:generatePack")}
             </Button>
-            <p className="text-xs text-slate-500 mt-2.5 text-center">
+            <p className="text-xs text-zinc-400 mt-2.5 text-center">
               {t("home:packDescription")}
             </p>
           </div>
         </section>
       </main>
-    </div>
+    </AppShell>
   );
 }

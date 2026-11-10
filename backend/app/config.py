@@ -4,6 +4,7 @@ Backend configuration using Pydantic settings.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from pydantic import SecretStr, field_validator
@@ -61,6 +62,14 @@ class Settings(BaseSettings):
     def is_fake_voice(self) -> bool:
         """Check if using FakeVoice implementation."""
         return self.VOICE_IMPL.lower() == "fake"
+
+    @field_validator("AUDIO_STORAGE_PATH")
+    @classmethod
+    def resolve_serverless_audio_path(cls, value: str) -> str:
+        # Vercel Serverless filesystems are read-only outside /tmp.
+        if os.environ.get("VERCEL") and not Path(value).is_absolute():
+            return str(Path("/tmp/saakshi") / value)
+        return value
 
     @field_validator("SECRET_KEY")
     @classmethod

@@ -90,6 +90,10 @@ def create_application() -> FastAPI:
                 if candidate.is_relative_to(dist_dir) and candidate.is_file():
                     return FileResponse(candidate)
             return FileResponse(dist_index)
+    else:
+        @application.get("/", include_in_schema=False)
+        async def api_root() -> dict[str, str]:
+            return {"service": "saakshi-api", "status": "ok"}
 
     return application
 

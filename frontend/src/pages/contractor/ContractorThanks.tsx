@@ -22,11 +22,15 @@ export default function ContractorThanks() {
 
   return (
     <AuthBackdrop>
-      <div className="w-full bg-white/95 backdrop-blur-xl rounded-3xl border border-white/25 shadow-2xl p-6 sm:p-8 text-center">
+      <div className="obsidian-card relative w-full rounded-3xl overflow-hidden p-6 sm:p-8 text-center">
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent"
+        />
         {submission && (
           <div
             aria-hidden="true"
-            className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center"
+            className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 flex items-center justify-center shadow-[0_0_24px_-6px_rgba(16,185,129,0.4)]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -39,10 +43,10 @@ export default function ContractorThanks() {
             </svg>
           </div>
         )}
-        <h2 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight">
+        <h2 className="text-2xl font-bold text-white mb-3 tracking-tight">
           {submission ? t('contractor:thanksTitle') : t('contractor:notSubmittedTitle')}
         </h2>
-        <p className="text-sm text-slate-600 mb-6">
+        <p className="text-sm text-zinc-400 mb-6">
           {submission
             ? t('contractor:recordedStatus', {
                 result: t(`contractor:results.${submission.result}`),

@@ -67,11 +67,15 @@ export default function Onboarding({
 
   return (
     <AuthBackdrop>
-      <div className="w-full bg-white/95 backdrop-blur-xl rounded-3xl border border-white/25 shadow-2xl p-6 sm:p-8">
+      <div className="obsidian-card relative w-full rounded-3xl overflow-hidden p-6 sm:p-8">
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent"
+        />
         <div className="flex flex-col items-center mb-6">
           <div
             aria-hidden="true"
-            className="w-12 h-12 rounded-2xl bg-indigo-950 text-emerald-300 flex items-center justify-center shadow-md mb-3"
+            className="w-12 h-12 rounded-2xl bg-zinc-950 border border-cyan-400/30 text-cyan-300 flex items-center justify-center shadow-[0_0_24px_-4px_rgba(34,211,238,0.35)] mb-3.5"
           >
             <svg
               viewBox="0 0 24 24"
@@ -86,20 +90,20 @@ export default function Onboarding({
           </div>
           <div className="flex items-center gap-1.5 mb-2">
             <span
-              className={`h-1.5 w-6 rounded-full transition-colors ${
-                step === 1 ? 'bg-indigo-700' : 'bg-emerald-500'
+              className={`h-1.5 w-7 rounded-full transition-colors ${
+                step === 1 ? 'bg-cyan-400' : 'bg-emerald-400'
               }`}
             />
             <span
-              className={`h-1.5 w-6 rounded-full transition-colors ${
-                step === 2 ? 'bg-indigo-700' : 'bg-slate-200'
+              className={`h-1.5 w-7 rounded-full transition-colors ${
+                step === 2 ? 'bg-cyan-400' : 'bg-zinc-800'
               }`}
             />
           </div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 mb-1">
+          <span className="text-[11px] font-mono font-semibold uppercase tracking-widest text-cyan-300 mb-1">
             {step} / 2
           </span>
-          <h1 className="text-2xl font-bold text-slate-900 text-center tracking-tight">
+          <h1 className="text-2xl font-bold text-white text-center tracking-tight">
             {step === 1 ? t('onboarding:welcome') : t('onboarding:setPin')}
           </h1>
         </div>
@@ -107,7 +111,7 @@ export default function Onboarding({
         {error && (
           <div
             role="alert"
-            className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl mb-4 text-sm"
+            className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-3 rounded-xl mb-4 text-sm"
           >
             {error}
           </div>
@@ -118,7 +122,7 @@ export default function Onboarding({
             <div className="mb-5">
               <label
                 htmlFor="worker-alias"
-                className="block text-sm font-medium text-slate-700 mb-1.5"
+                className="block text-sm font-medium text-zinc-300 mb-1.5"
               >
                 {t('onboarding:alias')}
               </label>
@@ -128,12 +132,12 @@ export default function Onboarding({
                 value={alias}
                 onChange={(e) => setAlias(e.target.value)}
                 placeholder={t('onboarding:enterAlias')}
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition"
+                className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition"
                 maxLength={50}
                 autoComplete="username"
               />
             </div>
-            <p className="text-sm font-medium text-slate-700 mb-2.5">
+            <p className="text-sm font-medium text-zinc-300 mb-2.5">
               {t('onboarding:chooseLanguage')}
             </p>
             <div className="grid grid-cols-2 gap-2.5">
@@ -142,10 +146,10 @@ export default function Onboarding({
                   key={lang.code}
                   type="button"
                   onClick={() => handleLanguageChange(lang.code)}
-                  className={`p-3 rounded-xl border text-sm font-medium transition ${
+                  className={`p-3 rounded-xl border text-sm font-semibold transition-all ${
                     selectedLanguage === lang.code
-                      ? 'bg-indigo-700 text-white border-indigo-700 shadow-sm'
-                      : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                      ? 'bg-cyan-400/15 text-cyan-200 border-cyan-400/60 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]'
+                      : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 hover:text-white'
                   }`}
                 >
                   {lang.name}
@@ -172,7 +176,7 @@ export default function Onboarding({
           <>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   {t('onboarding:createPin')}
                 </label>
                 <input
@@ -180,13 +184,13 @@ export default function Onboarding({
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
                   placeholder="••••"
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 text-center tracking-[0.4em] focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition"
+                  className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-600 text-center font-mono tracking-[0.45em] focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition"
                   inputMode="numeric"
                   maxLength={4}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   {t('onboarding:confirmPin')}
                 </label>
                 <input
@@ -194,7 +198,7 @@ export default function Onboarding({
                   value={confirmPin}
                   onChange={(e) => setConfirmPin(e.target.value)}
                   placeholder="••••"
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 text-center tracking-[0.4em] focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition"
+                  className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-600 text-center font-mono tracking-[0.45em] focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition"
                   inputMode="numeric"
                   maxLength={4}
                 />
@@ -220,12 +224,12 @@ export default function Onboarding({
         )}
 
         {step === 1 && (
-          <p className="mt-5 pt-4 border-t border-slate-100 text-center text-sm text-slate-600">
+          <p className="mt-5 pt-4 border-t border-white/[0.08] text-center text-sm text-zinc-400">
             {t('onboarding:haveAccount')}{' '}
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="font-semibold text-indigo-700 hover:text-indigo-900"
+              className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               {t('onboarding:login')}
             </button>

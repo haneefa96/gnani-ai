@@ -137,6 +137,16 @@ def load_voice_settings(*, load_env_files: bool = True) -> VoiceSettings:
         or "Avinash"
     ).strip()
 
+    tts_cache_raw = os.environ.get("VOICE_TTS_CACHE_DIR", "data/tts_cache").strip()
+    audio_stub_raw = os.environ.get("VOICE_AUDIO_STUB_DIR", "data/audio").strip()
+    tts_cache_path = Path(tts_cache_raw)
+    audio_stub_path = Path(audio_stub_raw)
+    if os.environ.get("VERCEL"):
+        if not tts_cache_path.is_absolute():
+            tts_cache_path = Path("/tmp/saakshi") / tts_cache_path
+        if not audio_stub_path.is_absolute():
+            audio_stub_path = Path("/tmp/saakshi") / audio_stub_path
+
     return VoiceSettings(
         voice_impl=os.environ.get("VOICE_IMPL", "fake").strip().lower(),
         gnani_api_key=os.environ.get("GNANI_API_KEY", "").strip(),
@@ -159,8 +169,8 @@ def load_voice_settings(*, load_env_files: bool = True) -> VoiceSettings:
         gnani_tts_contractor_voice=contractor_voice,
         gnani_tts_speed=float(os.environ.get("GNANI_TTS_SPEED", "0.9").strip() or "0.9"),
         gnani_tts_format=tts_fmt,
-        tts_cache_dir=Path(os.environ.get("VOICE_TTS_CACHE_DIR", "data/tts_cache").strip()),
-        audio_stub_dir=Path(os.environ.get("VOICE_AUDIO_STUB_DIR", "data/audio").strip()),
+        tts_cache_dir=tts_cache_path,
+        audio_stub_dir=audio_stub_path,
         keyterms_enabled=_env_bool("VOICE_KEYTERMS_ENABLED", False),
         llm_enabled=llm_enabled,
         llm_provider=llm_provider,

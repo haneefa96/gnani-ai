@@ -28,7 +28,7 @@ export function AppHeader({
   const location = useLocation()
 
   return (
-    <header className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur-md border-b border-white/10 text-white shadow-sm">
+    <header className="sticky top-0 z-20 bg-[#07070A]/85 backdrop-blur-xl border-b border-white/[0.08] text-zinc-100">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {onBack ? (
@@ -36,12 +36,12 @@ export function AppHeader({
               type="button"
               onClick={onBack}
               aria-label={backLabel}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shrink-0"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 shrink-0"
             >
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
-                className="w-5 h-5 fill-none stroke-current"
+                className="w-4 h-4 fill-none stroke-current"
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -53,11 +53,11 @@ export function AppHeader({
           ) : (
             <div
               aria-hidden="true"
-              className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0"
+              className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400/15 to-emerald-400/15 border border-cyan-400/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]"
             >
               <svg
                 viewBox="0 0 24 24"
-                className="w-5 h-5 text-emerald-300 fill-none stroke-current"
+                className="w-4 h-4 text-cyan-300 fill-none stroke-current"
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -68,9 +68,11 @@ export function AppHeader({
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="text-lg font-bold tracking-tight truncate">{title}</h1>
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-white truncate">
+              {title}
+            </h1>
             {subtitle && (
-              <p className="text-xs text-indigo-200 truncate">{subtitle}</p>
+              <p className="text-xs text-zinc-400 truncate">{subtitle}</p>
             )}
           </div>
         </div>
@@ -79,7 +81,7 @@ export function AppHeader({
           {showNav && (
             <nav
               aria-label="Primary"
-              className="hidden sm:flex items-center gap-1 rounded-xl bg-white/10 p-1"
+              className="hidden sm:flex items-center gap-1 rounded-xl bg-zinc-900/90 border border-zinc-800 p-1"
             >
               {NAV_ITEMS.map((item) => {
                 const active = location.pathname === item.path
@@ -88,10 +90,10 @@ export function AppHeader({
                     key={item.path}
                     type="button"
                     onClick={() => navigate(item.path)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       active
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-indigo-100 hover:bg-white/10 hover:text-white'
+                        ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-zinc-950 shadow-sm'
+                        : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'
                     }`}
                   >
                     {item.label}
@@ -107,7 +109,7 @@ export function AppHeader({
       {showNav && (
         <nav
           aria-label="Mobile Navigation"
-          className="sm:hidden border-t border-white/10 px-4 py-1.5 flex items-center gap-1.5"
+          className="sm:hidden border-t border-white/[0.06] px-4 py-1.5 flex items-center gap-1.5"
         >
           {NAV_ITEMS.map((item) => {
             const active = location.pathname === item.path
@@ -116,10 +118,10 @@ export function AppHeader({
                 key={item.path}
                 type="button"
                 onClick={() => navigate(item.path)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-medium text-center transition-colors ${
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold text-center transition-all ${
                   active
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-indigo-100 hover:bg-white/10'
+                    ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-zinc-950 shadow-sm'
+                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'
                 }`}
               >
                 {item.label}

@@ -80,7 +80,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-[#050507] text-zinc-400 text-sm">
         Loading...
       </div>
     );

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../components/AppHeader";
+import { AppShell } from "../components/AppShell";
 import { Button } from "../components/Button";
 import {
   ApiError,
@@ -159,7 +160,7 @@ export default function ExportScreen() {
     verifyState === "auth_error" || packState === "auth_error";
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <AppShell>
       <AppHeader
         title={t("export:title")}
         onBack={() => navigate("/home")}
@@ -169,16 +170,16 @@ export default function ExportScreen() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Hash Chain Verification Card */}
-        <section className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+        <section className="animate-fade-up obsidian-card rounded-2xl p-5">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-white">
               {t("export:verificationTitle", "Ledger Hash-Chain Verification")}
             </h2>
             <button
               type="button"
               onClick={() => void runVerification()}
               disabled={verifyState === "loading"}
-              className="text-sm font-medium text-indigo-700 hover:text-indigo-900 disabled:text-slate-400"
+              className="text-sm font-medium text-cyan-400 hover:text-cyan-300 disabled:text-zinc-600 transition-colors"
             >
               {t("export:recheckVerification", "Recheck")}
             </button>
@@ -187,7 +188,7 @@ export default function ExportScreen() {
           {verifyState === "loading" && (
             <p
               data-testid="verify-loading"
-              className="text-sm text-slate-600 mt-2.5"
+              className="text-sm text-zinc-400 mt-2.5"
             >
               {t("export:verifyingChain", "Verifying hash chain integrity...")}
             </p>
@@ -196,7 +197,7 @@ export default function ExportScreen() {
           {verifyState === "valid" && (
             <div
               data-testid="verify-valid"
-              className="mt-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm"
+              className="mt-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm"
             >
               <span className="font-semibold">
                 {t("export:chainValid", "Hash chain verified intact")}
@@ -205,7 +206,7 @@ export default function ExportScreen() {
                 <span> ({verifyResult.checked_entries} entries)</span>
               )}
               {verifyResult?.message && (
-                <div className="text-xs text-emerald-700 mt-1">
+                <div className="text-xs text-emerald-300/80 mt-1">
                   {verifyResult.message}
                 </div>
               )}
@@ -215,7 +216,7 @@ export default function ExportScreen() {
           {verifyState === "invalid" && (
             <div
               data-testid="verify-invalid"
-              className="mt-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm"
+              className="mt-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm"
             >
               <div className="font-semibold">
                 {t("export:chainInvalid", "Hash chain verification failed")}
@@ -231,7 +232,7 @@ export default function ExportScreen() {
           {verifyState === "error" && (
             <div
               data-testid="verify-error"
-              className="mt-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm"
+              className="mt-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm"
             >
               {verifyError}
             </div>
@@ -243,7 +244,7 @@ export default function ExportScreen() {
           <div
             data-testid="auth-error"
             role="alert"
-            className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-5 space-y-3"
+            className="bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl p-5 space-y-3"
           >
             <p className="font-semibold">
               {t(
@@ -266,11 +267,11 @@ export default function ExportScreen() {
         {packState === "success" && pack && (
           <section
             data-testid="pack-success"
-            className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 text-center space-y-4"
+            className="animate-fade-up obsidian-card rounded-2xl p-6 text-center space-y-4"
           >
             <div
               aria-hidden="true"
-              className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center"
+              className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 flex items-center justify-center shadow-[0_0_24px_-6px_rgba(16,185,129,0.4)]"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -282,19 +283,19 @@ export default function ExportScreen() {
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
               {t("export:generated")}
             </h2>
-            <p className="text-sm text-slate-600">{t("export:packGenerated")}</p>
+            <p className="text-sm text-zinc-400">{t("export:packGenerated")}</p>
 
-            <div className="text-left bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 text-xs text-slate-700 space-y-1.5">
+            <div className="text-left bg-zinc-950/90 border border-zinc-800 rounded-xl p-3.5 text-xs text-zinc-300 space-y-1.5">
               <div>
-                <span className="font-semibold">Entries:</span>{" "}
-                <span className="tabular-nums">{pack.entry_count}</span>
+                <span className="font-semibold text-zinc-200">Entries:</span>{" "}
+                <span className="tabular-nums font-mono text-cyan-300">{pack.entry_count}</span>
               </div>
               <div className="break-all">
-                <span className="font-semibold">Chain Head Hash:</span>{" "}
-                <code className="font-mono text-slate-800">
+                <span className="font-semibold text-zinc-200">Chain Head Hash:</span>{" "}
+                <code className="font-mono text-emerald-300">
                   {pack.chain_head_hash || "NONE"}
                 </code>
               </div>
@@ -304,7 +305,7 @@ export default function ExportScreen() {
               <div
                 data-testid="download-error"
                 role="alert"
-                className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-sm"
+                className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-sm"
               >
                 {downloadError}
               </div>
@@ -313,7 +314,7 @@ export default function ExportScreen() {
             {downloadNotice && (
               <div
                 data-testid="download-notice"
-                className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-sm"
+                className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 p-3 rounded-xl text-sm"
               >
                 {downloadNotice}
               </div>
@@ -358,11 +359,11 @@ export default function ExportScreen() {
 
         {/* Period Selection & Generation Form */}
         {packState !== "success" && (
-          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-1.5">
+          <section className="animate-fade-up obsidian-card rounded-2xl p-6">
+            <h2 className="text-lg font-semibold text-white mb-1.5">
               {t("export:generatePack")}
             </h2>
-            <p className="text-sm text-slate-600 mb-6">
+            <p className="text-sm text-zinc-400 mb-6">
               {t("export:periodDescription")}
             </p>
 
@@ -370,7 +371,7 @@ export default function ExportScreen() {
               <div
                 data-testid="export-empty"
                 role="status"
-                className="mb-4 p-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 text-sm"
+                className="mb-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm"
               >
                 {packError ||
                   t(
@@ -384,7 +385,7 @@ export default function ExportScreen() {
               <div
                 data-testid="export-error"
                 role="alert"
-                className="mb-4 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm"
+                className="mb-4 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm"
               >
                 {packError}
               </div>
@@ -394,7 +395,7 @@ export default function ExportScreen() {
               <div>
                 <label
                   htmlFor="period-from"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
+                  className="block text-sm font-medium text-zinc-300 mb-1.5"
                 >
                   {t("export:periodFrom")}
                 </label>
@@ -403,13 +404,13 @@ export default function ExportScreen() {
                   type="date"
                   value={periodFrom}
                   onChange={(e) => setPeriodFrom(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </div>
               <div>
                 <label
                   htmlFor="period-to"
-                  className="block text-sm font-medium text-slate-700 mb-1.5"
+                  className="block text-sm font-medium text-zinc-300 mb-1.5"
                 >
                   {t("export:periodTo")}
                 </label>
@@ -418,7 +419,7 @@ export default function ExportScreen() {
                   type="date"
                   value={periodTo}
                   onChange={(e) => setPeriodTo(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 />
               </div>
             </div>
@@ -433,11 +434,11 @@ export default function ExportScreen() {
                 : t("export:generate")}
             </Button>
 
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">
+            <div className="mt-6 pt-5 border-t border-white/[0.08]">
+              <h3 className="text-sm font-semibold text-white mb-2">
                 {t("export:whatIsIncluded")}
               </h3>
-              <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+              <ul className="list-disc list-inside text-sm text-zinc-400 space-y-1">
                 <li>{t("export:includedPDF")}</li>
                 <li>{t("export:includedAudio")}</li>
                 <li>{t("export:includedManifest")}</li>
@@ -447,6 +448,6 @@ export default function ExportScreen() {
           </section>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }

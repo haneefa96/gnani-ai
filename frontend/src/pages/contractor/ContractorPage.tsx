@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppHeader } from "../../components/AppHeader";
+import { AppShell } from "../../components/AppShell";
+import { AuthBackdrop } from "../../components/AuthBackdrop";
 import { Button } from "../../components/Button";
 import { TtsPlayer } from "../../voice/TtsPlayer";
 import { VoiceButton } from "../../voice/VoiceButton";
@@ -130,190 +132,194 @@ export default function ContractorPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-600 text-sm">
-        {t("common:loading")}
-      </div>
+      <AuthBackdrop>
+        <div className="obsidian-card rounded-3xl p-8 text-center text-zinc-400 text-sm">
+          {t("common:loading")}
+        </div>
+      </AuthBackdrop>
     );
   }
 
   if (!entryData) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 text-center">
-          <p role="alert" className="text-rose-700 font-medium mb-2">
+      <AuthBackdrop>
+        <div className="obsidian-card w-full rounded-3xl p-6 sm:p-8 text-center">
+          <p role="alert" className="text-rose-300 font-medium mb-2">
             {error || t("contractor:tokenUnavailable")}
           </p>
-          <p className="text-sm text-slate-600 mb-6">
+          <p className="text-sm text-zinc-400 mb-6">
             {t("contractor:tokenUnavailableHelp")}
           </p>
           <Button onClick={() => void loadEntry()} variant="secondary">
             {t("common:retry")}
           </Button>
         </div>
-      </div>
+      </AuthBackdrop>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" aria-busy={submitting}>
-      <AppHeader title="Saakshi" subtitle={t("contractor:contractorPage")} />
+    <AppShell>
+      <div aria-busy={submitting}>
+        <AppHeader title="Saakshi" subtitle={t("contractor:contractorPage")} />
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        {/* Notice */}
-        <section className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-          <h3 className="font-semibold text-amber-900 text-sm">
-            {t("contractor:noticeTitle")}
-          </h3>
-          <p className="text-sm text-amber-800 mt-1">
-            {t("contractor:noticeDescription")}
-          </p>
-        </section>
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+          {/* Notice */}
+          <section className="animate-fade-up bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+            <h3 className="font-semibold text-amber-300 text-sm">
+              {t("contractor:noticeTitle")}
+            </h3>
+            <p className="text-sm text-amber-100/80 mt-1">
+              {t("contractor:noticeDescription")}
+            </p>
+          </section>
 
-        {/* Entry text */}
-        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="text-base font-semibold text-slate-900">
-              {t("contractor:workEntry")}
-            </h2>
-            <span className="text-xs text-slate-500 tabular-nums">
-              {t("contractor:entryId", { id: entryData.entry_id })}
-            </span>
-          </div>
-          <p className="rounded-xl bg-slate-50 border border-slate-200/80 p-3.5 text-slate-800 text-sm whitespace-pre-wrap">
-            {entryData.entry_text || "—"}
-          </p>
-          <p className="text-xs text-slate-500 mt-2.5">
-            {t("contractor:language", { lang: entryData.language })}
-          </p>
-          {entryData.entry_text && (
-            <div className="mt-4">
-              <TtsPlayer
-                text={entryData.entry_text}
-                lang={toSupportedLanguage(entryData.language)}
-                audience="contractor"
-                autoPlay={false}
-              />
-            </div>
-          )}
-        </section>
-
-        {/* Voice confirmation response */}
-        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
-          <h3 className="font-semibold text-slate-900 mb-1.5">
-            {t("contractor:confirmEntry")}
-          </h3>
-          <p className="text-sm text-slate-600 mb-5">
-            {t("contractor:confirmDescription")}
-          </p>
-
-          <VoiceButton
-            lang={toSupportedLanguage(entryData.language)}
-            mode="confirm"
-            kind="confirm"
-            label={t("contractor:recordResponse")}
-            disabled={submitting}
-            onStateChange={(nextStatus) => {
-              voiceStatusRef.current = nextStatus;
-              setVoiceStatus(nextStatus);
-              if (nextStatus === "connecting" || nextStatus === "recording") {
-                latestAudioUriRef.current = undefined;
-                setVoiceAudioUri(undefined);
-                pendingYesSubmitRef.current = false;
-              } else if (
-                (nextStatus === "idle" || nextStatus === "error") &&
-                pendingYesSubmitRef.current
-              ) {
-                pendingYesSubmitRef.current = false;
-                void submitResponse("yes", latestAudioUriRef.current);
-              }
-            }}
-            onAudioSaved={(saved) => {
-              latestAudioUriRef.current = saved.audio_ref;
-              setVoiceAudioUri(saved.audio_ref);
-              if (pendingYesSubmitRef.current) {
-                pendingYesSubmitRef.current = false;
-                void submitResponse("yes", saved.audio_ref);
-              }
-            }}
-            onTranscript={(spoken) => void handleVoiceResponse(spoken)}
-            onError={(err) => setError(err.message)}
-          />
-          {voiceStatus !== "idle" && (
-            <div className="mt-3 text-center">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                {voiceStatus}
+          {/* Entry text */}
+          <section className="animate-fade-up obsidian-card rounded-2xl p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h2 className="text-base font-semibold text-white">
+                {t("contractor:workEntry")}
+              </h2>
+              <span className="text-xs font-mono text-cyan-300 tabular-nums">
+                {t("contractor:entryId", { id: entryData.entry_id })}
               </span>
             </div>
-          )}
-          {voiceNote && (
-            <p className="text-xs text-slate-600 mt-3 italic text-center">
-              &ldquo;{voiceNote}&rdquo;
+            <p className="rounded-xl bg-zinc-950/90 border border-zinc-800 p-3.5 text-zinc-200 text-sm whitespace-pre-wrap">
+              {entryData.entry_text || "—"}
             </p>
-          )}
-
-          {error && (
-            <p
-              role="alert"
-              className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl mt-4 text-sm"
-            >
-              {error}
+            <p className="text-xs text-zinc-400 mt-2.5">
+              {t("contractor:language", { lang: entryData.language })}
             </p>
-          )}
+            {entryData.entry_text && (
+              <div className="mt-4">
+                <TtsPlayer
+                  text={entryData.entry_text}
+                  lang={toSupportedLanguage(entryData.language)}
+                  audience="contractor"
+                  autoPlay={false}
+                />
+              </div>
+            )}
+          </section>
 
-          <div className="mt-6 flex gap-3">
-            <Button
-              onClick={() => void submitResponse("yes")}
-              disabled={submitting}
-              className="flex-1"
-            >
-              {t("contractor:tapYes")}
-            </Button>
-            <Button
-              onClick={() => void submitResponse("no")}
-              disabled={submitting}
-              variant="secondary"
-              className="flex-1"
-            >
-              {t("contractor:tapNo")}
-            </Button>
-          </div>
-        </section>
+          {/* Voice confirmation response */}
+          <section className="animate-fade-up obsidian-card rounded-2xl p-5 sm:p-6">
+            <h3 className="font-semibold text-white mb-1.5">
+              {t("contractor:confirmEntry")}
+            </h3>
+            <p className="text-sm text-zinc-400 mb-5">
+              {t("contractor:confirmDescription")}
+            </p>
 
-        {/* Dispute option */}
-        <section className="bg-rose-50/70 rounded-2xl border border-rose-200 p-5 sm:p-6">
-          <h3 className="font-semibold text-rose-900 mb-2">
-            {t("contractor:disputeEntry")}
-          </h3>
-          {disputeOpen && (
-            <label className="block text-sm font-medium text-rose-900 mb-3">
-              {t("contractor:disputeReason")}
-              <textarea
-                value={reasonText}
-                onChange={(event) => setReasonText(event.target.value)}
-                maxLength={2000}
-                rows={3}
-                className="w-full px-3.5 py-2.5 border border-rose-300 rounded-xl bg-white text-slate-900 mt-2 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
-              />
-            </label>
-          )}
-          <Button
-            onClick={() => {
-              if (!disputeOpen) {
-                setDisputeOpen(true);
-                return;
-              }
-              void submitResponse("dispute");
-            }}
-            disabled={submitting}
-            variant="danger"
-            className="w-full"
-          >
-            {disputeOpen
-              ? t("contractor:submitDispute")
-              : t("contractor:tapDispute")}
-          </Button>
-        </section>
-      </main>
-    </div>
+            <VoiceButton
+              lang={toSupportedLanguage(entryData.language)}
+              mode="confirm"
+              kind="confirm"
+              label={t("contractor:recordResponse")}
+              disabled={submitting}
+              onStateChange={(nextStatus) => {
+                voiceStatusRef.current = nextStatus;
+                setVoiceStatus(nextStatus);
+                if (nextStatus === "connecting" || nextStatus === "recording") {
+                  latestAudioUriRef.current = undefined;
+                  setVoiceAudioUri(undefined);
+                  pendingYesSubmitRef.current = false;
+                } else if (
+                  (nextStatus === "idle" || nextStatus === "error") &&
+                  pendingYesSubmitRef.current
+                ) {
+                  pendingYesSubmitRef.current = false;
+                  void submitResponse("yes", latestAudioUriRef.current);
+                }
+              }}
+              onAudioSaved={(saved) => {
+                latestAudioUriRef.current = saved.audio_ref;
+                setVoiceAudioUri(saved.audio_ref);
+                if (pendingYesSubmitRef.current) {
+                  pendingYesSubmitRef.current = false;
+                  void submitResponse("yes", saved.audio_ref);
+                }
+              }}
+              onTranscript={(spoken) => void handleVoiceResponse(spoken)}
+              onError={(err) => setError(err.message)}
+            />
+            {voiceStatus !== "idle" && (
+              <div className="mt-3 text-center">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-medium bg-zinc-900 text-cyan-300 border border-zinc-800">
+                  {voiceStatus}
+                </span>
+              </div>
+            )}
+            {voiceNote && (
+              <p className="text-xs text-zinc-300 mt-3 italic text-center">
+                &ldquo;{voiceNote}&rdquo;
+              </p>
+            )}
+
+            {error && (
+              <p
+                role="alert"
+                className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-3 rounded-xl mt-4 text-sm"
+              >
+                {error}
+              </p>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <Button
+                onClick={() => void submitResponse("yes")}
+                disabled={submitting}
+                className="flex-1"
+              >
+                {t("contractor:tapYes")}
+              </Button>
+              <Button
+                onClick={() => void submitResponse("no")}
+                disabled={submitting}
+                variant="secondary"
+                className="flex-1"
+              >
+                {t("contractor:tapNo")}
+              </Button>
+            </div>
+          </section>
+
+          {/* Dispute option */}
+          <section className="animate-fade-up bg-rose-950/25 rounded-2xl border border-rose-500/30 p-5 sm:p-6">
+            <h3 className="font-semibold text-rose-300 mb-2">
+              {t("contractor:disputeEntry")}
+            </h3>
+            {disputeOpen && (
+              <label className="block text-sm font-medium text-rose-200 mb-3">
+                {t("contractor:disputeReason")}
+                <textarea
+                  value={reasonText}
+                  onChange={(event) => setReasonText(event.target.value)}
+                  maxLength={2000}
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 border border-rose-500/40 rounded-xl bg-zinc-950/90 text-zinc-100 mt-2 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
+                />
+              </label>
+            )}
+            <Button
+              onClick={() => {
+                if (!disputeOpen) {
+                  setDisputeOpen(true);
+                  return;
+                }
+                void submitResponse("dispute");
+              }}
+              disabled={submitting}
+              variant="danger"
+              className="w-full"
+            >
+              {disputeOpen
+                ? t("contractor:submitDispute")
+                : t("contractor:tapDispute")}
+            </Button>
+          </section>
+        </main>
+      </div>
+    </AppShell>
   );
 }

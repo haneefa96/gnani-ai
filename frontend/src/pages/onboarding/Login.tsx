@@ -56,11 +56,15 @@ export default function Login({
 
   return (
     <AuthBackdrop>
-      <div className="w-full bg-white/95 backdrop-blur-xl rounded-3xl border border-white/25 shadow-2xl p-6 sm:p-8">
+      <div className="obsidian-card relative w-full rounded-3xl overflow-hidden p-6 sm:p-8">
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent"
+        />
         <div className="flex flex-col items-center mb-6">
           <div
             aria-hidden="true"
-            className="w-12 h-12 rounded-2xl bg-indigo-950 text-emerald-300 flex items-center justify-center shadow-md mb-3"
+            className="w-12 h-12 rounded-2xl bg-zinc-950 border border-cyan-400/30 text-cyan-300 flex items-center justify-center shadow-[0_0_24px_-4px_rgba(34,211,238,0.35)] mb-3.5"
           >
             <svg
               viewBox="0 0 24 24"
@@ -73,7 +77,7 @@ export default function Login({
               <path d="m9 12 2 2 4-4" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 text-center tracking-tight">
+          <h1 className="text-2xl font-bold text-white text-center tracking-tight">
             {t('onboarding:welcomeBack')}
           </h1>
         </div>
@@ -81,7 +85,7 @@ export default function Login({
         {error && (
           <div
             role="alert"
-            className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl mb-4 text-sm"
+            className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-3 rounded-xl mb-4 text-sm"
           >
             {error}
           </div>
@@ -89,7 +93,7 @@ export default function Login({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
               {t('onboarding:alias')}
             </label>
             <input
@@ -97,14 +101,14 @@ export default function Login({
               value={alias}
               onChange={(e) => setAlias(e.target.value)}
               placeholder={t('onboarding:enterAlias')}
-              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition"
+              className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition"
               maxLength={50}
               autoComplete="username"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
               {t('onboarding:pin')}
             </label>
             <input
@@ -112,7 +116,7 @@ export default function Login({
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="••••"
-              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 text-center tracking-[0.4em] focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition"
+              className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-600 text-center font-mono tracking-[0.45em] focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition"
               inputMode="numeric"
               maxLength={4}
             />
@@ -123,13 +127,13 @@ export default function Login({
           {loading ? t('common:loading') : t('onboarding:login')}
         </Button>
 
-        <div className="mt-5 pt-4 border-t border-slate-100 text-center">
-          <p className="text-sm text-slate-600">
+        <div className="mt-5 pt-4 border-t border-white/[0.08] text-center">
+          <p className="text-sm text-zinc-400">
             {t('onboarding:donthaveAccount')}{' '}
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="font-semibold text-indigo-700 hover:text-indigo-900"
+              className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               {t('onboarding:register')}
             </button>

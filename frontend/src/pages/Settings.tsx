@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
+import { AppShell } from '../components/AppShell'
 import { Button } from '../components/Button'
 import {
   changeWorkerPin,
@@ -80,7 +81,7 @@ export default function Settings({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <AppShell>
       <AppHeader
         title={t('settings:title')}
         onBack={() => navigate('/home')}
@@ -90,23 +91,23 @@ export default function Settings({
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Worker info */}
-        <section className="animate-fade-up bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+        <section className="animate-fade-up obsidian-card rounded-2xl p-5">
           <div className="flex items-center justify-between gap-3 mb-4">
-            <h2 className="font-semibold text-slate-900">
+            <h2 className="font-semibold text-white">
               {t('settings:workerInfo')}
             </h2>
             <Button onClick={onLogout} variant="secondary" size="sm">
               {t('common:logout')}
             </Button>
           </div>
-          <div className="divide-y divide-slate-100 text-sm">
+          <div className="divide-y divide-white/[0.07] text-sm">
             <div className="flex justify-between py-2.5">
-              <span className="text-slate-500">{t('settings:alias')}</span>
-              <span className="font-medium text-slate-900">{worker.alias}</span>
+              <span className="text-zinc-400">{t('settings:alias')}</span>
+              <span className="font-medium text-zinc-100">{worker.alias}</span>
             </div>
             <div className="flex justify-between py-2.5">
-              <span className="text-slate-500">{t('settings:language')}</span>
-              <span className="font-medium text-slate-900">
+              <span className="text-zinc-400">{t('settings:language')}</span>
+              <span className="font-mono font-medium text-cyan-300">
                 {worker.language}
               </span>
             </div>
@@ -114,20 +115,20 @@ export default function Settings({
         </section>
 
         {/* Language preference */}
-        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
-          <h2 className="font-semibold text-slate-900 mb-1.5">
+        <section className="animate-fade-up obsidian-card rounded-2xl p-5">
+          <h2 className="font-semibold text-white mb-1.5">
             {t('settings:language')}
           </h2>
-          <p className="text-sm text-slate-600 mb-2">
+          <p className="text-sm text-zinc-400 mb-2">
             {t('settings:languageDescription')}
           </p>
-          <p className="text-xs font-medium text-slate-500 mb-3">
+          <p className="text-xs font-mono font-medium text-cyan-300 mb-3">
             {t('settings:currentLanguage', { lang: worker.language })}
           </p>
           {languageError && (
             <p
               role="alert"
-              className="text-sm text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-xl mb-3"
+              className="text-sm text-rose-300 bg-rose-500/10 border border-rose-500/30 p-2.5 rounded-xl mb-3"
             >
               {languageError}
             </p>
@@ -139,10 +140,10 @@ export default function Settings({
                 type="button"
                 disabled={changingLanguage}
                 onClick={() => void handleLanguageSelect(lang.code)}
-                className={`p-3 rounded-xl border transition text-sm font-medium ${
+                className={`p-3 rounded-xl border transition-all text-sm font-semibold ${
                   worker.language === lang.code
-                    ? 'bg-indigo-700 text-white border-indigo-700 shadow-sm'
-                    : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                    ? 'bg-cyan-400/15 text-cyan-200 border-cyan-400/60 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]'
+                    : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 hover:text-white'
                 }`}
               >
                 {lang.name}
@@ -152,13 +153,13 @@ export default function Settings({
         </section>
 
         {/* Change PIN */}
-        <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
-          <h2 className="font-semibold text-slate-900 mb-4">
+        <section className="animate-fade-up obsidian-card rounded-2xl p-5">
+          <h2 className="font-semibold text-white mb-4">
             {t('settings:changePin')}
           </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                 {t('settings:currentPin')}
               </label>
               <input
@@ -167,14 +168,14 @@ export default function Settings({
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 placeholder={t('settings:enterCurrentPin')}
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 inputMode="numeric"
                 maxLength={72}
                 autoComplete="current-password"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                 {t('settings:newPin')}
               </label>
               <input
@@ -183,14 +184,14 @@ export default function Settings({
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value)}
                 placeholder={t('settings:enterNewPin')}
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 inputMode="numeric"
                 maxLength={4}
                 autoComplete="new-password"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                 {t('settings:confirmNewPin')}
               </label>
               <input
@@ -199,19 +200,19 @@ export default function Settings({
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value)}
                 placeholder={t('settings:confirmNewPin')}
-                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none"
+                className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
                 inputMode="numeric"
                 maxLength={4}
                 autoComplete="new-password"
               />
             </div>
             {pinError && (
-              <p role="alert" className="text-sm text-rose-700">
+              <p role="alert" className="text-sm text-rose-300">
                 {pinError}
               </p>
             )}
             {pinSuccess && (
-              <p role="status" className="text-sm text-emerald-700">
+              <p role="status" className="text-sm text-emerald-300">
                 {pinSuccess}
               </p>
             )}
@@ -226,11 +227,11 @@ export default function Settings({
         </section>
 
         {/* Data deletion */}
-        <section className="bg-rose-50/70 rounded-2xl border border-rose-200 p-5">
-          <h2 className="font-semibold text-rose-900 mb-2">
+        <section className="animate-fade-up bg-rose-950/25 rounded-2xl border border-rose-500/30 p-5">
+          <h2 className="font-semibold text-rose-300 mb-2">
             {t('settings:deleteAccount')}
           </h2>
-          <p className="text-sm text-rose-700 mb-4">
+          <p className="text-sm text-rose-200/80 mb-4">
             {t('settings:deleteAccountWarning')}
           </p>
           <Button
@@ -242,6 +243,6 @@ export default function Settings({
           </Button>
         </section>
       </main>
-    </div>
+    </AppShell>
   )
 }
