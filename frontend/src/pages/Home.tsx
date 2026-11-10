@@ -35,6 +35,10 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
     (entry) => entry.status === "UNCONFIRMED",
   ).length;
   const latestDue = entries[0]?.due_inr;
+  const voiceBusy =
+    voiceStatus === "connecting" ||
+    voiceStatus === "recording" ||
+    voiceStatus === "processing";
 
   const handleVoiceTranscript = async (
     text: string,
@@ -145,7 +149,12 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
             mode="narration"
             kind="narration"
             label={t("home:recordEntry")}
-            onStateChange={setVoiceStatus}
+            onStateChange={(nextState) => {
+              setVoiceStatus(nextState);
+              if (nextState === "connecting" || nextState === "recording") {
+                setSavedAudio(null);
+              }
+            }}
             onAudioSaved={(saved) => setSavedAudio(saved)}
             onTranscript={(text, detectedLang) =>
               void handleVoiceTranscript(text, detectedLang)
@@ -252,7 +261,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
 
             <Button
               onClick={() => void handleSaveAndConfirm()}
-              disabled={saving || extracting}
+              disabled={saving || extracting || voiceBusy}
               className="w-full"
             >
               {saving ? t("common:loading") : t("common:confirm", "Confirm")}

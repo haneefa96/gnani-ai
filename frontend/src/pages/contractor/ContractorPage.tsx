@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../components/Button";
@@ -31,6 +31,10 @@ export default function ContractorPage() {
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [reasonText, setReasonText] = useState("");
   const [error, setError] = useState("");
+
+  const voiceStatusRef = useRef<SttStatus>("idle");
+  const latestAudioUriRef = useRef<string | undefined>(undefined);
+  const pendingYesSubmitRef = useRef(false);
 
   const loadEntry = useCallback(async () => {
     if (!token) {
@@ -74,7 +78,7 @@ export default function ContractorPage() {
         token,
         result,
         result === "dispute" ? reasonText : undefined,
-        audioUriOverride ?? voiceAudioUri,
+        audioUriOverride ?? latestAudioUriRef.current ?? voiceAudioUri,
       );
       navigate("/contractor/thanks", {
         replace: true,
@@ -101,12 +105,23 @@ export default function ContractorPage() {
     try {
       const classified = await classifyConfirmation(spokenText, lang);
       if (classified.result === "yes") {
-        await submitResponse("yes");
+        const statusNow = voiceStatusRef.current;
+        const stillFinalizing =
+          statusNow === "connecting" ||
+          statusNow === "recording" ||
+          statusNow === "processing";
+        if (stillFinalizing && !latestAudioUriRef.current) {
+          pendingYesSubmitRef.current = true;
+          return;
+        }
+        await submitResponse("yes", latestAudioUriRef.current);
       } else {
+        pendingYesSubmitRef.current = false;
         setDisputeOpen(true);
         setReasonText(spokenText);
       }
     } catch {
+      pendingYesSubmitRef.current = false;
       setDisputeOpen(true);
       setReasonText(spokenText);
     }
@@ -201,8 +216,29 @@ export default function ContractorPage() {
             kind="confirm"
             label={t("contractor:recordResponse")}
             disabled={submitting}
-            onStateChange={setVoiceStatus}
-            onAudioSaved={(saved) => setVoiceAudioUri(saved.audio_ref)}
+            onStateChange={(nextStatus) => {
+              voiceStatusRef.current = nextStatus;
+              setVoiceStatus(nextStatus);
+              if (nextStatus === "connecting" || nextStatus === "recording") {
+                latestAudioUriRef.current = undefined;
+                setVoiceAudioUri(undefined);
+                pendingYesSubmitRef.current = false;
+              } else if (
+                (nextStatus === "idle" || nextStatus === "error") &&
+                pendingYesSubmitRef.current
+              ) {
+                pendingYesSubmitRef.current = false;
+                void submitResponse("yes", latestAudioUriRef.current);
+              }
+            }}
+            onAudioSaved={(saved) => {
+              latestAudioUriRef.current = saved.audio_ref;
+              setVoiceAudioUri(saved.audio_ref);
+              if (pendingYesSubmitRef.current) {
+                pendingYesSubmitRef.current = false;
+                void submitResponse("yes", saved.audio_ref);
+              }
+            }}
             onTranscript={(spoken) => void handleVoiceResponse(spoken)}
             onError={(err) => setError(err.message)}
           />
