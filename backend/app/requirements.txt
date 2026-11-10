@@ -20,7 +20,7 @@ reportlab==4.2.2
 # Security
 passlib[bcrypt]==1.7.4
 pyjwt==2.9.0
-bcrypt==4.2.0
+bcrypt==3.2.2
 
 # Testing
 pytest==8.3.0
