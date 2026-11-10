@@ -532,8 +532,6 @@ paths:
             schema:
               type: object
               properties:
-                worker_id:
-                  type: string
                 period_from:
                   type: string
                   format: date

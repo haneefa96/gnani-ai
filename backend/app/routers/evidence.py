@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings
 from app.models import EvidencePack, Entry, Worker
 from app.db import SessionLocal
+from app.deps import CurrentWorker
 from app.services.hashchain import HashChainService
 from app.services.pdf import EvidencePDFService
 
@@ -32,7 +33,6 @@ def get_db():
 
 
 class EvidencePackRequest(BaseModel):
-    worker_id: int
     period_from: str  # YYYY-MM-DD
     period_to: str  # YYYY-MM-DD
 
@@ -46,12 +46,13 @@ class EvidencePackResponse(BaseModel):
 @router.post("/evidence", response_model=EvidencePackResponse)
 async def build_evidence_pack(
     request: EvidencePackRequest,
+    current_worker_id: CurrentWorker,
     db = Depends(get_db)
 ) -> EvidencePackResponse:
     """Build evidence pack."""
     # Get entries for the worker within the period
     entries = db.query(Entry).filter(
-        Entry.worker_id == request.worker_id,
+        Entry.worker_id == current_worker_id,
         Entry.work_date >= request.period_from,
         Entry.work_date <= request.period_to,
     ).order_by(Entry.created_at).all()
@@ -61,11 +62,11 @@ async def build_evidence_pack(
     
     # Generate PDF
     pdf_service = EvidencePDFService()
-    pdf_path = f"./data/audio/evidence_{request.worker_id}_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+    pdf_path = f"./data/audio/evidence_{current_worker_id}_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
     os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
     
     # Get worker alias for the PDF
-    worker = db.query(Worker).filter(Worker.id == request.worker_id).first()
+    worker = db.query(Worker).filter(Worker.id == current_worker_id).first()
     
     # Convert entries to dict for PDF
     entry_data = [
@@ -91,12 +92,12 @@ async def build_evidence_pack(
     )
     
     # Create ZIP with audio files
-    zip_path = f"./data/audio/evidence_{request.worker_id}_{datetime.utcnow().strftime('%Y%m%d')}.zip"
+    zip_path = f"./data/audio/evidence_{current_worker_id}_{datetime.utcnow().strftime('%Y%m%d')}.zip"
     with zipfile.ZipFile(zip_path, 'w') as zf:
         # Add manifest
         manifest = "Evidence Pack Manifest\n"
         manifest += f"Generated: {datetime.utcnow().isoformat()}\n"
-        manifest += f"Worker ID: {request.worker_id}\n"
+        manifest += f"Worker ID: {current_worker_id}\n"
         manifest += f"Period: {request.period_from} to {request.period_to}\n\n"
         manifest += "Entries:\n"
         for e in entries:
@@ -119,7 +120,7 @@ async def build_evidence_pack(
     
     # Store evidence pack record
     evidence_pack = EvidencePack(
-        worker_id=request.worker_id,
+        worker_id=current_worker_id,
         period_from=request.period_from,
         period_to=request.period_to,
         pdf_uri=pdf_path,
@@ -139,11 +140,13 @@ async def build_evidence_pack(
 
 @router.get("/verify", response_model=dict)
 async def verify_chain(
+    current_worker_id: CurrentWorker,
     db = Depends(get_db)
 ) -> dict:
     """Verify hash chain integrity."""
-    # Get all entries
-    entries = db.query(Entry).order_by(Entry.created_at).all()
+    entries = db.query(Entry).filter(
+        Entry.worker_id == current_worker_id
+    ).order_by(Entry.created_at).all()
     
     if not entries:
         return {"valid": True, "mismatch_reason": None, "message": "No entries to verify"}

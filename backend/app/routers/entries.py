@@ -18,6 +18,7 @@ from sqlalchemy import select
 from app.config import Settings
 from app.models import Entry, Worker, Counterparty, EntryStatusLog, ShareToken
 from app.db import SessionLocal
+from app.deps import CurrentWorker
 from app.services.hashchain import HashChainService
 
 settings = Settings()
@@ -33,18 +34,11 @@ def get_db():
         db.close()
 
 
-def get_current_worker(auth_token: dict = Depends(lambda: {'worker_id': 1})):
-    """Get current worker ID (placeholder - should be replaced with proper JWT dependency)"""
-    return 1
-
-
 def get_hashchain_service() -> HashChainService:
     """Get hash chain service instance"""
     return HashChainService()
 
 
-# Dependency types
-CurrentWorker = Annotated[int, Depends(get_current_worker)]
 HashChainServiceDep = Annotated[HashChainService, Depends(get_hashchain_service)]
 
 
