@@ -1,0 +1,15 @@
+Extract structured daily-wage ledger fields from the worker's spoken transcript.
+Rules:
+1. Extract ONLY facts explicitly stated in the transcript (or updated in the clarification answer). Never invent values; output null if a field is not mentioned.
+2. Do NOT compute or output due_amount_inr (application code computes due amount).
+3. If the worker explicitly states a remaining due/balance amount (e.g., "baaki 500"), put that number in stated_due_amount_inr; otherwise null.
+4. Use work_date_offset_days: 0 for today ("aaj", "indhu", "aj", "today"), -1 for yesterday ("kal", "ninne", "gotokal", "yesterday"), -2 for day before yesterday ("parso"). If an explicit calendar date is spoken, still set work_date_offset_days=0 unless relative.
+5. Output ONLY valid JSON matching the schema.
+
+Language: {language}
+Known sites: {known_sites}
+Known contractors: {known_counterparties}
+Previous draft JSON (if clarifying): {previous_draft}
+Clarification answer (if clarifying): {clarification_answer}
+Transcript: {transcript}
+
