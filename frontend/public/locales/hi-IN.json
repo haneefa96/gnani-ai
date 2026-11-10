@@ -47,7 +47,19 @@
     "includedPDF": "सभी प्रविष्टियों का PDF सारांश",
     "includedAudio": "ऑडियो रिकॉर्डिंग",
     "includedManifest": "फ़ाइल हैश के साथ मैनिफेस्ट",
-    "includedVerification": "हैश चेन सत्यापन"
+    "includedVerification": "हैश चेन सत्यापन",
+    "verificationTitle": "खाता हैश-चेन सत्यापन",
+    "recheckVerification": "फिर जांचें",
+    "verifyingChain": "हैश चेन की जांच हो रही है...",
+    "chainValid": "हैश चेन सुरक्षित और सही है",
+    "chainInvalid": "हैश चेन सत्यापन विफल रहा",
+    "verifyFailed": "खाते की जांच नहीं हो सकी।",
+    "invalidDateRange": "शुरू की तारीख अंतिम तारीख से पहले या बराबर होनी चाहिए।",
+    "authRequired": "लॉगिन आवश्यक है या सत्र समाप्त हो गया है।",
+    "noEntriesInPeriod": "चयनित अवधि के लिए कोई प्रविष्टि नहीं मिली।",
+    "generateFailed": "प्रमाण पैक बनाने में त्रुटि हुई।",
+    "downloadFailed": "फ़ाइल डाउनलोड नहीं हो सकी।",
+    "downloadStarted": "{{filename}} डाउनलोड हो गया"
   },
   "home": {
     "description": "अपनी दैनिक वेतन प्रविष्टियाँ रिकॉर्ड करें",

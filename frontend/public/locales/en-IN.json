@@ -46,7 +46,19 @@
     "includedPDF": "PDF summary of all entries",
     "includedAudio": "Audio recordings",
     "includedManifest": "Manifest with file hashes",
-    "includedVerification": "Hash chain verification"
+    "includedVerification": "Hash chain verification",
+    "verificationTitle": "Ledger Hash-Chain Verification",
+    "recheckVerification": "Recheck",
+    "verifyingChain": "Verifying hash chain integrity...",
+    "chainValid": "Hash chain verified intact",
+    "chainInvalid": "Hash chain verification failed",
+    "verifyFailed": "Unable to verify ledger integrity.",
+    "invalidDateRange": "Start date must be on or before end date.",
+    "authRequired": "Authentication required or session expired.",
+    "noEntriesInPeriod": "No wage entries found for this date range.",
+    "generateFailed": "Failed to generate evidence pack.",
+    "downloadFailed": "Failed to download file.",
+    "downloadStarted": "Downloaded {{filename}}"
   },
   "home": {
     "description": "Record your daily wage entries",

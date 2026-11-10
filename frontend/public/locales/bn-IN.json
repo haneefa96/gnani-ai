@@ -47,7 +47,19 @@
     "includedPDF": "সমস্ত এন্ট্রির PDF সারাংশ",
     "includedAudio": "অডিও রেকর্ডিং",
     "includedManifest": "ফাইল হ্যাশ সহ ম্যানিফেস্ট",
-    "includedVerification": "হ্যাশ চেন যাচাই"
+    "includedVerification": "হ্যাশ চেন যাচাই",
+    "verificationTitle": "লেজার হ্যাশ-চেন যাচাই",
+    "recheckVerification": "আবার যাচাই করুন",
+    "verifyingChain": "হ্যাশ চেন যাচাই করা হচ্ছে...",
+    "chainValid": "হ্যাশ চেন অক্ষত রয়েছে",
+    "chainInvalid": "হ্যাশ চেন যাচাই ব্যর্থ হয়েছে",
+    "verifyFailed": "লেজার যাচাই করা যায়নি।",
+    "invalidDateRange": "শুরুর তারিখ শেষের তারিখের আগে বা সমান হতে হবে।",
+    "authRequired": "লগইন প্রয়োজন বা সেশন শেষ হয়েছে।",
+    "noEntriesInPeriod": "নির্বাচিত সময়ের জন্য কোনো এন্ট্রি পাওয়া যায়নি।",
+    "generateFailed": "প্রমাণ প্যাক তৈরি করা যায়নি।",
+    "downloadFailed": "ফাইল ডাউনলোড করা যায়নি।",
+    "downloadStarted": "{{filename}} ডাউনলোড হয়েছে"
   },
   "home": {
     "description": "আপনার দৈনিক বেতন এন্ট্রি রেকর্ড করুন",

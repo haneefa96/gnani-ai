@@ -47,7 +47,19 @@
     "includedPDF": "ಎಲ್ಲಾ ಪ್ರವೇಶಗಳ � PDF ಸಾರಾಂಶ",
     "includedAudio": "ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್‌ಗಳು",
     "includedManifest": "ಫೈಲ್ ಹ್ಯಾಶ್‌ಗಳೊಂದಿಗೆ ಮ್ಯಾನಿಫೆಸ್ಟ್",
-    "includedVerification": "ಹ್ಯಾಶ್ ಚೇನ್ ಪರಿಶೀಲನೆ"
+    "includedVerification": "ಹ್ಯಾಶ್ ಚೇನ್ ಪರಿಶೀಲನೆ",
+    "verificationTitle": "ಲೆಡ್ಜರ್ ಹ್ಯಾಶ್-ಚೇನ್ ಪರಿಶೀಲನೆ",
+    "recheckVerification": "ಮತ್ತೆ ಪರಿಶೀಲಿಸಿ",
+    "verifyingChain": "ಹ್ಯಾಶ್ ಚೇನ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",
+    "chainValid": "ಹ್ಯಾಶ್ ಚೇನ್ ಸುರಕ್ಷಿತವಾಗಿದೆ",
+    "chainInvalid": "ಹ್ಯಾಶ್ ಚೇನ್ ಪರಿಶೀಲನೆ ವಿಫಲವಾಗಿದೆ",
+    "verifyFailed": "ಹ್ಯಾಶ್ ಚೇನ್ ಪರಿಶೀಲಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+    "invalidDateRange": "ಪ್ರಾರಂಭದ ದಿನಾಂಕ ಅಂತಿಮ ದಿನಾಂಕಕ್ಕಿಂತ ಮುಂಚೆ ಅಥವಾ ಸಮನಾಗಿರಬೇಕು.",
+    "authRequired": "ಲಾಗಿನ್ ಅಗತ್ಯವಿದೆ ಅಥವಾ ಸೆಷನ್ ಮುಗಿದಿದೆ.",
+    "noEntriesInPeriod": "ಆಯ್ಕೆಮಾಡಿದ ಅವಧಿಗೆ ಯಾವುದೇ ನಮೂದುಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
+    "generateFailed": "ಸಾಕ್ಷ್ಯ ಪ್ಯಾಕ್ ರಚಿಸಲು ವಿಫಲವಾಗಿದೆ.",
+    "downloadFailed": "ಫೈಲ್ ಡೌನ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ.",
+    "downloadStarted": "{{filename}} ಡೌನ್‌ಲೋಡ್ ಆಗಿದೆ"
   },
   "home": {
     "description": "ನಿಮ್ಮ ದೈನಂದಿನ ವೇತನ ಪ್ರವೇಶಗಳನ್ನು ದಾಖಲಿಸಿ",
