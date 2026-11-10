@@ -7,7 +7,9 @@
     "settings": "Settings",
     "cancel": "Cancel",
     "confirm": "Confirm",
+    "logout": "Log out",
     "emptyFields": "Please fill in all fields",
+    "retry": "Retry",
     "enterAlias": "Enter your alias",
     "pin": "PIN",
     "register": "Register",
@@ -28,7 +30,10 @@
     "register": "Register",
     "donthaveAccount": "Don't have an account?",
     "welcomeBack": "Welcome Back",
-    "login": "Login"
+    "login": "Login",
+    "authFailed": "Unable to authenticate. Please try again.",
+    "aliasTooShort": "Alias must be at least 3 characters.",
+    "haveAccount": "Already have an account?"
   },
   "export": {
     "title": "Generate Evidence Pack",
@@ -67,7 +72,7 @@
     "entries": "{{count}}",
     "totalEntries": "Total Entries",
     "dueAmount": "₹{{amount}}",
-    "totalDue": "Total Due",
+    "latestEntryDue": "Latest entry due",
     "unconfirmed": "{{count}}",
     "unconfirmedEntries": "Unconfirmed",
     "recentEntries": "Recent Entries",
@@ -82,10 +87,20 @@
     "entryCount": "{{count}} entries recorded",
     "contractor": "Contractor: {{name}}",
     "hours": "Hours",
+    "days": "Days",
     "agreed": "Agreed",
     "paid": "Paid",
     "due": "Due",
-    "noEntries": "No entries yet"
+    "noEntries": "No entries yet",
+    "statuses": {
+      "DRAFT": "Draft",
+      "WORKER_CONFIRMED": "Worker confirmed",
+      "SHARED": "Shared",
+      "CONTRACTOR_CONFIRMED": "Contractor confirmed",
+      "CONTRACTOR_DISPUTED": "Contractor disputed",
+      "UNCONFIRMED": "Unconfirmed",
+      "DELETED": "Deleted"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -106,11 +121,15 @@
     "currentLanguage": "Current: {{lang}}"
   },
   "contractor": {
-    "invalidLink": "Invalid or expired link",
+    "invalidLink": "Invalid, expired or already used link",
+    "tokenUnavailable": "This confirmation link is invalid, expired or has already been used.",
+    "tokenUnavailableHelp": "Ask the worker for a new confirmation link if you still need to respond.",
+    "responseFailed": "Your response was not confirmed. Please try again.",
     "contractorPage": "Contractor Page",
     "noticeTitle": "Important Notice",
     "noticeDescription": "By confirming this entry, you are acknowledging the work performed and the amounts agreed upon.",
     "workEntry": "Work Entry",
+    "entryId": "Entry #{{id}}",
     "language": "Language: {{lang}}",
     "confirmEntry": "Confirm Entry",
     "confirmDescription": "Please confirm or dispute this entry by voice or tap",
@@ -119,7 +138,17 @@
     "tapNo": "Tap No",
     "disputeEntry": "Dispute Entry",
     "tapDispute": "Tap to Dispute",
+    "disputeReason": "Reason for dispute (optional)",
+    "submitDispute": "Submit Dispute",
     "thanksTitle": "Thank You!",
-    "thanksDescription": "Your response has been recorded. This entry is now updated in the worker's record."
+    "recordedStatus": "Your {{result}} response was recorded. Current entry status: {{status}}.",
+    "results": {
+      "yes": "Yes",
+      "no": "No",
+      "dispute": "Dispute"
+    },
+    "notSubmittedTitle": "No response confirmed",
+    "notSubmittedDescription": "A response has not been confirmed by the server.",
+    "returnToEntry": "Return to entry"
   }
 }

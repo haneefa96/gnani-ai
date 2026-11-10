@@ -65,13 +65,10 @@ describe("ExportScreen evidence and verification integration", () => {
 
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem("saakshi_access_token", "jwt-valid-token");
     localStorage.setItem(
-      "saakshi_worker",
-      JSON.stringify({
-        id: 99,
-        alias: "ramesh",
-        access_token: "jwt-valid-token",
-      }),
+      "saakshi_worker_profile",
+      JSON.stringify({ alias: "ramesh", language: "hi-IN" }),
     );
     fetchMock.mockReset();
     mockNavigate.mockReset();

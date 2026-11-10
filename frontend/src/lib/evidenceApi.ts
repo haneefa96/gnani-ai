@@ -1,3 +1,5 @@
+import { AUTH_EXPIRED_EVENT, clearAuthSession, getAccessToken } from "../api";
+
 export interface VerificationResult {
   valid: boolean;
   mismatch_reason: string | null;
@@ -32,6 +34,11 @@ export class ApiError extends Error {
 
 export function getStoredAuthToken(): string | null {
   try {
+    const primary = getAccessToken();
+    if (primary && primary.trim()) {
+      return primary.trim();
+    }
+
     const direct =
       localStorage.getItem("saakshi_token") ||
       localStorage.getItem("access_token");
@@ -55,6 +62,15 @@ export function getStoredAuthToken(): string | null {
     return null;
   }
   return null;
+}
+
+function handleUnauthorizedResponse(response: Response): void {
+  if (response.status === 401) {
+    clearAuthSession();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+  }
 }
 
 function buildAuthHeaders(
@@ -130,6 +146,7 @@ export async function verifyLedgerChain(): Promise<VerificationResult> {
   }
 
   if (!response.ok) {
+    handleUnauthorizedResponse(response);
     const msg = await parseErrorMessage(
       response,
       "Verification request failed",
@@ -159,6 +176,7 @@ export async function generateEvidencePack(
   }
 
   if (!response.ok) {
+    handleUnauthorizedResponse(response);
     const msg = await parseErrorMessage(
       response,
       "Failed to generate evidence pack",
@@ -184,6 +202,7 @@ export async function downloadEvidenceFile(
   }
 
   if (!response.ok) {
+    handleUnauthorizedResponse(response);
     const msg = await parseErrorMessage(response, "Download failed");
     throw new ApiError(msg, response.status);
   }

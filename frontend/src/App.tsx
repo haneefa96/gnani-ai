@@ -2,6 +2,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import i18n from './i18n'
+import {
+  AUTH_EXPIRED_EVENT,
+  clearAuthSession,
+  restoreAuthSession,
+  storeAuthSession,
+  type AuthResponse,
+  type WorkerProfile,
+} from './api'
+import AuthGuard from './AuthGuard'
 
 // Pages
 import Onboarding from './pages/onboarding/Onboarding'
@@ -14,20 +23,38 @@ import ContractorPage from './pages/contractor/ContractorPage'
 import ContractorThanks from './pages/contractor/ContractorThanks'
 
 function App() {
-  const [worker, setWorker] = useState<any>(null)
+  const [worker, setWorker] = useState<WorkerProfile | null>(null)
+  const [authenticated, setAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in
-    const checkAuth = async () => {
-      const savedWorker = localStorage.getItem('saakshi_worker')
-      if (savedWorker) {
-        setWorker(JSON.parse(savedWorker))
-      }
-      setLoading(false)
+    const restoredProfile = restoreAuthSession()
+    if (restoredProfile) {
+      setWorker(restoredProfile)
+      setAuthenticated(true)
     }
-    checkAuth()
+
+    const handleAuthExpired = () => {
+      setWorker(null)
+      setAuthenticated(false)
+    }
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired)
+    setLoading(false)
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired)
   }, [])
+
+  const handleLogin = (response: AuthResponse, profile: WorkerProfile) => {
+    storeAuthSession(response.access_token, profile)
+    setWorker(profile)
+    setAuthenticated(true)
+  }
+
+  const handleLogout = () => {
+    clearAuthSession()
+    setWorker(null)
+    setAuthenticated(false)
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
@@ -39,28 +66,18 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={worker ? <Navigate to="/home" /> : <Onboarding onLogin={(w) => { setWorker(w); localStorage.setItem('saakshi_worker', JSON.stringify(w)) }} />}
+            element={authenticated ? <Navigate to="/home" replace /> : <Onboarding onLogin={handleLogin} />}
           />
           <Route
             path="/login"
-            element={<Login onLogin={(w) => { setWorker(w); localStorage.setItem('saakshi_worker', JSON.stringify(w)) }} />}
+            element={authenticated ? <Navigate to="/home" replace /> : <Login onLogin={handleLogin} />}
           />
-          <Route
-            path="/home"
-            element={worker ? <Home worker={worker} /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/history"
-            element={worker ? <History worker={worker} /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/settings"
-            element={worker ? <Settings worker={worker} /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/export"
-            element={worker ? <ExportScreen /> : <Navigate to="/" />}
-          />
+          <Route element={<AuthGuard authenticated={authenticated} />}>
+            <Route path="/home" element={worker && <Home worker={worker} />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/settings" element={worker && <Settings worker={worker} onLogout={handleLogout} />} />
+            <Route path="/export" element={<ExportScreen />} />
+          </Route>
           <Route
             path="/c/:token"
             element={<ContractorPage />}

@@ -7,13 +7,18 @@
     "settings": "সেটিংস",
     "cancel": "বাতিল করুন",
     "confirm": "যাচাই করুন",
+    "logout": "লগ আউট",
     "emptyFields": "অনুগ্রহ করে সমস্ত ক্ষেত্র পূরণ করুন",
+    "retry": "আবার চেষ্টা করুন",
     "enterAlias": "আপনার উপনাম লিখুন",
     "pin": "পিন",
     "register": "নিবন্ধন করুন",
     "donthaveAccount": "অ্যাকাউন্ট নেই?",
     "welcomeBack": "আপনাকে স্বাগতম",
-    "login": "লগইন"
+    "login": "লগইন",
+    "authFailed": "প্রমাণীকরণ করা যায়নি। আবার চেষ্টা করুন।",
+    "aliasTooShort": "উপনাম কমপক্ষে ৩ অক্ষরের হতে হবে।",
+    "haveAccount": "আগে থেকেই অ্যাকাউন্ট আছে?"
   },
   "onboarding": {
     "welcome": "সাক্ষীতে আপনাকে স্বাগতম",
@@ -68,7 +73,7 @@
     "entries": "{{count}}",
     "totalEntries": "মোট এন্ট্রি",
     "dueAmount": "₹{{amount}}",
-    "totalDue": "মোট বকেয়া",
+    "latestEntryDue": "সর্বশেষ এন্ট্রির বকেয়া",
     "unconfirmed": "{{count}}",
     "unconfirmedEntries": "অনিশ্চিত",
     "recentEntries": "সাম্প্রতিক এন্ট্রি",
@@ -83,10 +88,20 @@
     "entryCount": "{{count}} এন্ট্রি রেকর্ড করা হয়েছে",
     "contractor": "ঠিকাদার: {{name}}",
     "hours": "ঘন্টা",
+    "days": "দিন",
     "agreed": "সম্মত",
     "paid": "প্রদানকৃত",
     "due": "বকেয়া",
-    "noEntries": "এখনও কোনো এন্ট্রি নেই"
+    "noEntries": "এখনও কোনো এন্ট্রি নেই",
+    "statuses": {
+      "DRAFT": "খসড়া",
+      "WORKER_CONFIRMED": "শ্রমিক নিশ্চিত করেছেন",
+      "SHARED": "শেয়ার করা হয়েছে",
+      "CONTRACTOR_CONFIRMED": "ঠিকাদার নিশ্চিত করেছেন",
+      "CONTRACTOR_DISPUTED": "ঠিকাদার আপত্তি করেছেন",
+      "UNCONFIRMED": "অনিশ্চিত",
+      "DELETED": "মুছে ফেলা হয়েছে"
+    }
   },
   "settings": {
     "title": "সেটিংস",
@@ -107,11 +122,15 @@
     "currentLanguage": "বর্তমান: {{lang}}"
   },
   "contractor": {
-    "invalidLink": "অবৈধ বা মেয়াদোত্তীর্ণ লিঙ্ক",
+    "invalidLink": "অবৈধ, মেয়াদোত্তীর্ণ বা ইতিমধ্যে ব্যবহৃত লিঙ্ক",
+    "tokenUnavailable": "এই নিশ্চিতকরণ লিঙ্কটি অবৈধ, মেয়াদোত্তীর্ণ বা ইতিমধ্যে ব্যবহৃত হয়েছে।",
+    "tokenUnavailableHelp": "এখনও উত্তর দিতে হলে কর্মীর কাছে নতুন নিশ্চিতকরণ লিঙ্ক চান।",
+    "responseFailed": "আপনার উত্তর নিশ্চিত করা যায়নি। আবার চেষ্টা করুন।",
     "contractorPage": "ঠিকাদার পেজ",
     "noticeTitle": "গুরুত্বপূর্ণ বিজ্ঞপ্তি",
     "noticeDescription": "এই এন্ট্রিটি যাচাই করে আপনি সম্পাদিত কাজ এবং সম্মত পরিমাণগুলি স্বীকার করছেন।",
     "workEntry": "কাজের এন্ট্রি",
+    "entryId": "এন্ট্রি #{{id}}",
     "language": "ভাষা: {{lang}}",
     "confirmEntry": "এন্ট্রি যাচাই করুন",
     "confirmDescription": "অনুগ্রহ করে কণ্ঠস্বর বা ট্যাপ দ্বারা এই এন্ট্রিটি যাচাই বা বিরোধ করুন",
@@ -120,7 +139,17 @@
     "tapNo": "না ট্যাপ করুন",
     "disputeEntry": "এন্ট্রি বিরোধ করুন",
     "tapDispute": "বিরোধ করতে ট্যাপ করুন",
+    "disputeReason": "বিরোধের কারণ (ঐচ্ছিক)",
+    "submitDispute": "বিরোধ জমা দিন",
     "thanksTitle": "ধন্যবাদ!",
-    "thanksDescription": "আপনার প্রতিক্রিয়া রেকর্ড করা হয়েছে। এই এন্ট্রিটি এখন শ্রমিকের রেকর্ডে আপডেট করা হয়েছে।"
+    "recordedStatus": "আপনার {{result}} উত্তর রেকর্ড করা হয়েছে। এন্ট্রির বর্তমান অবস্থা: {{status}}।",
+    "results": {
+      "yes": "হ্যাঁ",
+      "no": "না",
+      "dispute": "বিরোধ"
+    },
+    "notSubmittedTitle": "উত্তর নিশ্চিত হয়নি",
+    "notSubmittedDescription": "সার্ভার এখনও কোনো উত্তর নিশ্চিত করেনি।",
+    "returnToEntry": "এন্ট্রিতে ফিরে যান"
   }
 }

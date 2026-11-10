@@ -13,7 +13,10 @@ __pycache__/
 *$py.class
 *.pytest_cache/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .venv/
+.venv*/
 venv/
 env/
 ENV/
@@ -21,20 +24,28 @@ build/
 dist/
 *.egg-info/
 .coverage
+.coverage.*
+.tox/
+.cache
 htmlcov/
 
-# Local SQLite DBs & runtime audio/TTS caches
+# Local SQLite DBs & generated runtime audio/evidence caches
 *.db
 *.sqlite
 *.sqlite3
 data/
 **/data/
+backend/app/data/audio/
+backend/app/data/evidence/
+*.pdf
+*.zip
 
 # Node / frontend artifacts
 node_modules/
 frontend/node_modules/
 frontend/build/
 frontend/dist/
+coverage/
 
 # Logs & OS/IDE
 logs/
@@ -43,3 +54,5 @@ logs/
 .idea/
 *.swp
 *~
+.DS_Store
+Thumbs.db
