@@ -1,0 +1,374 @@
+{
+  "entries": [
+    {
+      "id": "hi_complete_01",
+      "category": "complete",
+      "transcript": "Aaj Basavanagudi site pe 8 ghante kaam kiya, Suresh bhaiya ne 700 ka bola, 300 diye.",
+      "lang": "hi-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "hi_complete_01.wav",
+      "expected_draft": {
+        "site_name": "Basavanagudi",
+        "counterparty_name": "Suresh",
+        "work_type": null,
+        "hours": 8,
+        "days": null,
+        "agreed_amount_inr": 700,
+        "paid_amount_inr": 300,
+        "due_amount_inr": 400,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.92,
+          "counterparty_name": 0.94,
+          "hours": 0.96,
+          "agreed_amount_inr": 0.95,
+          "paid_amount_inr": 0.94
+        },
+        "needs_clarification": [],
+        "clarification_question": null,
+        "language": "hi-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "kn_complete_02",
+      "category": "complete",
+      "transcript": "ಇಂದು ಮಲ್ಲೇಶ್ವರಂ ಸೈಟ್‌ನಲ್ಲಿ 9 ಗಂಟೆ ಕೆಲಸ ಮಾಡಿದ್ದೇನೆ, ರಮೇಶ್ ಅವರು 800 ರೂಪಾಯಿ ಹೇಳಿ 500 ಕೊಟ್ಟರು.",
+      "lang": "kn-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "kn_complete_02.wav",
+      "expected_draft": {
+        "site_name": "ಮಲ್ಲೇಶ್ವರಂ",
+        "counterparty_name": "ರಮೇಶ್",
+        "work_type": null,
+        "hours": 9,
+        "days": null,
+        "agreed_amount_inr": 800,
+        "paid_amount_inr": 500,
+        "due_amount_inr": 300,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.90,
+          "counterparty_name": 0.91,
+          "hours": 0.95,
+          "agreed_amount_inr": 0.94,
+          "paid_amount_inr": 0.93
+        },
+        "needs_clarification": [],
+        "clarification_question": null,
+        "language": "kn-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "bn_complete_03",
+      "category": "complete",
+      "transcript": "আজ সল্টলেক সাইটে 8 ঘণ্টা কাজ করেছি, অমিত দা 650 টাকা বলেছেন, 400 টাকা দিয়েছেন।",
+      "lang": "bn-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "bn_complete_03.wav",
+      "expected_draft": {
+        "site_name": "সল্টলেক",
+        "counterparty_name": "অমিত",
+        "work_type": null,
+        "hours": 8,
+        "days": null,
+        "agreed_amount_inr": 650,
+        "paid_amount_inr": 400,
+        "due_amount_inr": 250,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.89,
+          "counterparty_name": 0.90,
+          "hours": 0.95,
+          "agreed_amount_inr": 0.94,
+          "paid_amount_inr": 0.93
+        },
+        "needs_clarification": [],
+        "clarification_question": null,
+        "language": "bn-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "en_complete_04",
+      "category": "complete",
+      "transcript": "Worked 10 hours today at Whitefield site under Raju, agreed 900 rupees, paid 900 rupees.",
+      "lang": "en-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "en_complete_04.wav",
+      "expected_draft": {
+        "site_name": "Whitefield",
+        "counterparty_name": "Raju",
+        "work_type": null,
+        "hours": 10,
+        "days": null,
+        "agreed_amount_inr": 900,
+        "paid_amount_inr": 900,
+        "due_amount_inr": 0,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.93,
+          "counterparty_name": 0.92,
+          "hours": 0.96,
+          "agreed_amount_inr": 0.95,
+          "paid_amount_inr": 0.95
+        },
+        "needs_clarification": [],
+        "clarification_question": null,
+        "language": "en-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "hi_missing_paid_05",
+      "category": "missing_paid",
+      "transcript": "आज इंदिरानगर साइट पर 8 घंटे काम किया, महेश ने 600 रुपये तय किए।",
+      "lang": "hi-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "hi_missing_paid_05.wav",
+      "expected_draft": {
+        "site_name": "इंदिरानगर",
+        "counterparty_name": "महेश",
+        "work_type": null,
+        "hours": 8,
+        "days": null,
+        "agreed_amount_inr": 600,
+        "paid_amount_inr": null,
+        "due_amount_inr": null,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.91,
+          "counterparty_name": 0.90,
+          "hours": 0.95,
+          "agreed_amount_inr": 0.93,
+          "paid_amount_inr": 0.0
+        },
+        "needs_clarification": ["paid_amount_inr"],
+        "clarification_question": "कितने रुपये मिले?",
+        "language": "hi-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "en_paid_exceeds_agreed_06",
+      "category": "paid_gt_agreed",
+      "transcript": "At Koramangala site for 6 hours with Mohan, agreed 500, paid 700.",
+      "lang": "en-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "en_paid_exceeds_agreed_06.wav",
+      "expected_draft": {
+        "site_name": "Koramangala",
+        "counterparty_name": "Mohan",
+        "work_type": null,
+        "hours": 6,
+        "days": null,
+        "agreed_amount_inr": 500,
+        "paid_amount_inr": 700,
+        "due_amount_inr": null,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.91,
+          "counterparty_name": 0.90,
+          "hours": 0.95,
+          "agreed_amount_inr": 0.91,
+          "paid_amount_inr": 0.91
+        },
+        "needs_clarification": ["paid_amount_inr"],
+        "clarification_question": "Paid amount (700) is higher than agreed (500). How much was agreed?",
+        "language": "en-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "hi_stated_due_mismatch_07",
+      "category": "due_mismatch",
+      "transcript": "Aaj Yelahanka site pe 8 ghante kaam kiya, Rajesh ne 800 bola, 300 diya, baaki 600 hai.",
+      "lang": "hi-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "hi_stated_due_mismatch_07.wav",
+      "expected_draft": {
+        "site_name": "Yelahanka",
+        "counterparty_name": "Rajesh",
+        "work_type": null,
+        "hours": 8,
+        "days": null,
+        "agreed_amount_inr": 800,
+        "paid_amount_inr": 300,
+        "due_amount_inr": 500,
+        "stated_due_amount_inr": 600,
+        "field_confidence": {
+          "site_name": 0.90,
+          "counterparty_name": 0.92,
+          "hours": 0.95,
+          "agreed_amount_inr": 0.94,
+          "paid_amount_inr": 0.93
+        },
+        "needs_clarification": ["due_amount_inr"],
+        "clarification_question": "800 तय और 300 मिलने पर बाकी 500 बनता है, आपने 600 कहा। क्या तय रकम या मिली रकम बदलनी है?",
+        "language": "hi-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "hi_kal_date_08",
+      "category": "kal_date",
+      "transcript": "Kal Hebbal site pe 1 din kaam kiya, Kiran contractor ne 750 ka bola, 250 diye.",
+      "lang": "hi-IN",
+      "work_date_offset_days": -1,
+      "audio_file": "hi_kal_date_08.wav",
+      "expected_draft": {
+        "site_name": "Hebbal",
+        "counterparty_name": "Kiran",
+        "work_type": null,
+        "hours": null,
+        "days": 1,
+        "agreed_amount_inr": 750,
+        "paid_amount_inr": 250,
+        "due_amount_inr": 500,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.90,
+          "counterparty_name": 0.92,
+          "days": 0.95,
+          "agreed_amount_inr": 0.94,
+          "paid_amount_inr": 0.93
+        },
+        "needs_clarification": [],
+        "clarification_question": null,
+        "language": "hi-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "kn_codemixed_09",
+      "category": "code_mixed",
+      "transcript": "Ninney Jayanagar site alli 8 hours plumbing work maadide, Mahesh sir 1000 fix maadi 400 advance kottaru.",
+      "lang": "kn-IN",
+      "work_date_offset_days": -1,
+      "audio_file": "kn_codemixed_09.wav",
+      "expected_draft": {
+        "site_name": "Jayanagar",
+        "counterparty_name": "Mahesh",
+        "work_type": "plumbing",
+        "hours": 8,
+        "days": null,
+        "agreed_amount_inr": 1000,
+        "paid_amount_inr": 400,
+        "due_amount_inr": 600,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.89,
+          "counterparty_name": 0.91,
+          "work_type": 0.85,
+          "hours": 0.95,
+          "agreed_amount_inr": 0.93,
+          "paid_amount_inr": 0.92
+        },
+        "needs_clarification": [],
+        "clarification_question": null,
+        "language": "kn-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "bn_codemixed_missing_agreed_10",
+      "category": "code_mixed_missing_agreed",
+      "transcript": "Aaj New Town site e 7 hours plastering kaaj korechi, Bikas da 300 taka diyeche.",
+      "lang": "bn-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "bn_codemixed_missing_agreed_10.wav",
+      "expected_draft": {
+        "site_name": "New Town",
+        "counterparty_name": "Bikas",
+        "work_type": "plastering",
+        "hours": 7,
+        "days": null,
+        "agreed_amount_inr": null,
+        "paid_amount_inr": 300,
+        "due_amount_inr": null,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "site_name": 0.88,
+          "counterparty_name": 0.90,
+          "work_type": 0.84,
+          "hours": 0.94,
+          "agreed_amount_inr": 0.0,
+          "paid_amount_inr": 0.92
+        },
+        "needs_clarification": ["agreed_amount_inr"],
+        "clarification_question": "মোট কত টাকা ঠিক হয়েছিল?",
+        "language": "bn-IN",
+        "manual_correction_required": false
+      }
+    },
+    {
+      "id": "hi_llm_only_implicit_half_16",
+      "category": "llm_only_semantic",
+      "llm_only": true,
+      "llm_only_reason": "Requires semantic inference that 'aadha' (half) of 800 equals 400 paid.",
+      "transcript": "Aaj Suresh ke saath kaam kiya, 800 me se aadha mila hai.",
+      "lang": "hi-IN",
+      "work_date_offset_days": 0,
+      "audio_file": "hi_llm_only_implicit_half_16.wav",
+      "expected_draft": {
+        "site_name": null,
+        "counterparty_name": "Suresh",
+        "work_type": null,
+        "hours": null,
+        "days": null,
+        "agreed_amount_inr": 800,
+        "paid_amount_inr": 400,
+        "due_amount_inr": 400,
+        "stated_due_amount_inr": null,
+        "field_confidence": {
+          "counterparty_name": 0.90,
+          "agreed_amount_inr": 0.92,
+          "paid_amount_inr": 0.85
+        },
+        "needs_clarification": ["hours"],
+        "clarification_question": "आपने कितने घंटे काम किया?",
+        "language": "hi-IN",
+        "manual_correction_required": false
+      }
+    }
+  ],
+  "confirmations": [
+    {
+      "id": "confirm_hi_yes_11",
+      "transcript": "हाँ ठीक है",
+      "lang": "hi-IN",
+      "expected": "yes",
+      "audio_file": "confirm_hi_yes_11.wav"
+    },
+    {
+      "id": "confirm_hi_no_12",
+      "transcript": "nahi galat hai",
+      "lang": "hi-IN",
+      "expected": "no",
+      "audio_file": "confirm_hi_no_12.wav"
+    },
+    {
+      "id": "confirm_kn_yes_13",
+      "transcript": "ಹೌದು ಸರಿ ಇದೆ",
+      "lang": "kn-IN",
+      "expected": "yes",
+      "audio_file": "confirm_kn_yes_13.wav"
+    },
+    {
+      "id": "confirm_bn_no_14",
+      "transcript": "না ঠিক নয়",
+      "lang": "bn-IN",
+      "expected": "no",
+      "audio_file": "confirm_bn_no_14.wav"
+    },
+    {
+      "id": "confirm_en_unclear_15",
+      "transcript": "wait maybe check again",
+      "lang": "en-IN",
+      "expected": "unclear",
+      "audio_file": "confirm_en_unclear_15.wav"
+    }
+  ]
+}
+
