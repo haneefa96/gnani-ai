@@ -4,6 +4,9 @@ Backend configuration using Pydantic settings.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
@@ -12,7 +15,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=Path(__file__).resolve().parents[2] / ".env",
         env_file_encoding="utf-8",
         case_sensitive=True
     )
@@ -26,7 +29,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./saakshi.db"
     
     # Security
-    SECRET_KEY: str = "your-secret-key-here"  # Override in production!
+    SECRET_KEY: SecretStr
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Share tokens
@@ -56,3 +59,15 @@ class Settings(BaseSettings):
     def is_fake_voice(self) -> bool:
         """Check if using FakeVoice implementation."""
         return self.VOICE_IMPL.lower() == "fake"
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, value: SecretStr) -> SecretStr:
+        secret = value.get_secret_value()
+        if (
+            len(secret) < 32
+            or secret != secret.strip()
+            or len(set(secret)) < 16
+        ):
+            raise ValueError("SECRET_KEY must be a strong, non-placeholder value")
+        return value
