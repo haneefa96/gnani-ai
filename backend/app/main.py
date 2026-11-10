@@ -6,7 +6,7 @@ Developer B: Product and Data
 
 import os
 import logging
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -72,8 +72,8 @@ def create_application() -> FastAPI:
     return application
 
 
-@contextmanager
-def lifespan(app: FastAPI):
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     logger.info("Starting Saakshi application...")

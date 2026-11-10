@@ -42,14 +42,14 @@ def integrated_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     for mod in (auth, entries, contractor, evidence):
         api.dependency_overrides[mod.get_db] = override_get_db
 
+    monkeypatch.setattr(main, "engine", engine)
     monkeypatch.chdir(tmp_path)
-    tc = TestClient(api)
-    try:
-        yield tc, tmp_path
-    finally:
-        tc.close()
-        engine.dispose()
-        auth.login_rate_limiter.reset()
+    with TestClient(api) as tc:
+        try:
+            yield tc, tmp_path
+        finally:
+            engine.dispose()
+            auth.login_rate_limiter.reset()
 
 
 def test_voice_router_mounted_and_full_stt_extract_draft_confirm_evidence_flow(
