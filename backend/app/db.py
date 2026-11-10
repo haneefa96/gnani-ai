@@ -7,8 +7,12 @@ from __future__ import annotations
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from config import Settings
-from models import Base
+try:
+    from app.config import Settings
+    from app.models import Base
+except ImportError:
+    from config import Settings
+    from models import Base
 
 settings = Settings()
 
