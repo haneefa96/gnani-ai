@@ -11,7 +11,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.sqlite import JSON
 
 Base = declarative_base()
 

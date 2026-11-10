@@ -31,6 +31,7 @@ export interface WageEntry {
   work_date: string;
   site_name: string | null;
   counterparty_name: string | null;
+  work_type?: string | null;
   hours: number | null;
   days: number | null;
   agreed_inr: number;
@@ -40,6 +41,38 @@ export interface WageEntry {
   transcript: string | null;
   status: string;
   created_at: string;
+}
+
+export interface VoiceDraftReview {
+  draft_token: string
+  transcript: string
+  work_date: string | null
+  site_name: string | null
+  counterparty_name: string | null
+  work_type: string | null
+  hours: number | null
+  days: number | null
+  agreed_amount_inr: number | null
+  paid_amount_inr: number | null
+  due_amount_inr: number | null
+  language: string
+  detected_language_code: string | null
+  field_confidence: Record<string, number>
+  needs_clarification: string[]
+  clarification_question: string | null
+  voice_mode: 'fake' | 'gnani'
+}
+
+export interface VoiceDraftConfirmation {
+  work_date: string
+  site_name: string | null
+  counterparty_name: string | null
+  work_type: string | null
+  hours: number | null
+  days: number | null
+  agreed_amount_inr: number
+  paid_amount_inr: number
+  language: string
 }
 
 export interface ContractorEntry {
@@ -165,6 +198,32 @@ export async function getEntries(): Promise<WageEntry[]> {
   if (!Array.isArray(response.data)) {
     throw new Error("Unexpected entries response");
   }
+  return response.data;
+}
+
+export async function createVoiceDraft(audio: Blob): Promise<VoiceDraftReview> {
+  const response = await api.post<VoiceDraftReview>("/entries/draft", audio, {
+    headers: { "Content-Type": audio.type || "application/octet-stream" },
+  });
+  return response.data;
+}
+
+export async function confirmVoiceDraft(
+  draft: VoiceDraftReview,
+  audio: Blob,
+  confirmation: VoiceDraftConfirmation,
+): Promise<WageEntry> {
+  const bytes = new Uint8Array(await audio.arrayBuffer());
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+
+  const response = await api.post<WageEntry>("/entries/draft/confirm", {
+    draft_token: draft.draft_token,
+    audio_base64: btoa(binary),
+    ...confirmation,
+  });
   return response.data;
 }
 

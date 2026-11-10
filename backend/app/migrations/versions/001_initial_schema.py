@@ -9,7 +9,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import sqlite
 
 # revision identifiers, used by Alembic.
 revision: str = '001_initial_schema'
@@ -29,8 +28,8 @@ def upgrade() -> None:
         sa.Column('consent_audio_uri', sa.String(), nullable=True),
         sa.Column('consent_text_version', sa.String(), nullable=True),
         sa.Column('consent_at', sa.DateTime(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), default=sa.func.utcnow()),
-        sa.Column('updated_at', sa.DateTime(), default=sa.func.utcnow(), onupdate=sa.func.utcnow()),
+        sa.Column('created_at', sa.DateTime(), default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), default=sa.func.now(), onupdate=sa.func.now()),
     )
 
     # Counterparties table
@@ -40,7 +39,7 @@ def upgrade() -> None:
         sa.Column('worker_id', sa.Integer(), sa.ForeignKey('workers.id'), nullable=False),
         sa.Column('display_name', sa.String(), nullable=False),
         sa.Column('phone_optional', sa.String(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), default=sa.func.utcnow()),
+        sa.Column('created_at', sa.DateTime(), default=sa.func.now()),
     )
 
     # Entries table
@@ -65,7 +64,7 @@ def upgrade() -> None:
         sa.Column('audio_sha256', sa.String(64), nullable=True),
         sa.Column('prev_hash', sa.String(64), nullable=False),
         sa.Column('entry_hash', sa.String(64), nullable=False),
-        sa.Column('created_at', sa.DateTime(), default=sa.func.utcnow()),
+        sa.Column('created_at', sa.DateTime(), default=sa.func.now()),
         sa.Column('status', sa.String(), default='DRAFT', nullable=False),
         sa.Column('corrects_entry_id', sa.Integer(), sa.ForeignKey('entries.id'), nullable=True),
     )
@@ -78,7 +77,7 @@ def upgrade() -> None:
         sa.Column('from_status', sa.String(), nullable=True),
         sa.Column('to_status', sa.String(), nullable=False),
         sa.Column('actor', sa.String(), nullable=False),
-        sa.Column('at', sa.DateTime(), default=sa.func.utcnow()),
+        sa.Column('at', sa.DateTime(), default=sa.func.now()),
     )
 
     # Share tokens table
@@ -89,7 +88,7 @@ def upgrade() -> None:
         sa.Column('token_hash', sa.String(64), nullable=False),
         sa.Column('expires_at', sa.DateTime(), nullable=False),
         sa.Column('used_at', sa.DateTime(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), default=sa.func.utcnow()),
+        sa.Column('created_at', sa.DateTime(), default=sa.func.now()),
     )
 
     # Confirmations table
@@ -103,7 +102,7 @@ def upgrade() -> None:
         sa.Column('transcript', sa.Text(), nullable=True),
         sa.Column('result', sa.String(), nullable=False),
         sa.Column('reason_text', sa.Text(), nullable=True),
-        sa.Column('at', sa.DateTime(), default=sa.func.utcnow()),
+        sa.Column('at', sa.DateTime(), default=sa.func.now()),
     )
 
     # Evidence packs table
@@ -116,7 +115,7 @@ def upgrade() -> None:
         sa.Column('pdf_uri', sa.String(), nullable=True),
         sa.Column('zip_uri', sa.String(), nullable=True),
         sa.Column('chain_head_hash', sa.String(64), nullable=False),
-        sa.Column('created_at', sa.DateTime(), default=sa.func.utcnow()),
+        sa.Column('created_at', sa.DateTime(), default=sa.func.now()),
     )
 
 

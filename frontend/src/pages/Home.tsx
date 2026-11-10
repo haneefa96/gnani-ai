@@ -16,6 +16,47 @@ import {
 } from "../api";
 import { notifyEntriesUpdated, useEntries } from "../useEntries";
 
+interface ReviewForm {
+  work_date: string;
+  site_name: string;
+  counterparty_name: string;
+  work_type: string;
+  hours: string;
+  days: string;
+  agreed_amount_inr: string;
+  paid_amount_inr: string;
+  language: string;
+}
+
+function optionalNumber(value: string): number | null {
+  if (!value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toReviewForm(
+  extracted: VoiceExtractDraft,
+  fallbackLang: string,
+): ReviewForm {
+  return {
+    work_date: extracted.work_date ?? "",
+    site_name: extracted.site_name ?? "",
+    counterparty_name: extracted.counterparty_name ?? "",
+    work_type: extracted.work_type ?? "",
+    hours: extracted.hours == null ? "" : String(extracted.hours),
+    days: extracted.days == null ? "" : String(extracted.days),
+    agreed_amount_inr:
+      extracted.agreed_amount_inr == null
+        ? ""
+        : String(extracted.agreed_amount_inr),
+    paid_amount_inr:
+      extracted.paid_amount_inr == null
+        ? ""
+        : String(extracted.paid_amount_inr),
+    language: extracted.language || fallbackLang,
+  };
+}
+
 export default function Home({ worker }: { worker: WorkerProfile }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -26,6 +67,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
   const [transcript, setTranscript] = useState("");
   const [savedAudio, setSavedAudio] = useState<SavedAudio | null>(null);
   const [draft, setDraft] = useState<VoiceExtractDraft | null>(null);
+  const [review, setReview] = useState<ReviewForm | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState("");
@@ -52,6 +94,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
     try {
       const extracted = await extractVoiceEntry(text, activeLang);
       setDraft(extracted);
+      setReview(toReviewForm(extracted, activeLang));
     } catch (err) {
       setVoiceError(
         getApiErrorMessage(
@@ -75,6 +118,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         turn_count: 1,
       });
       setDraft(updated);
+      setReview(toReviewForm(updated, draft.language));
     } catch (err) {
       setVoiceError(
         getApiErrorMessage(
@@ -87,8 +131,36 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
     }
   };
 
+  const updateReview = <K extends keyof ReviewForm>(
+    key: K,
+    value: ReviewForm[K],
+  ) => {
+    setReview((current) =>
+      current ? { ...current, [key]: value } : current,
+    );
+  };
+
   const handleSaveAndConfirm = async () => {
-    if (!draft || !transcript) return;
+    if (!draft || !review || !transcript) return;
+    const agreed = optionalNumber(review.agreed_amount_inr);
+    const paid = optionalNumber(review.paid_amount_inr);
+    if (
+      !review.work_date ||
+      agreed === null ||
+      paid === null ||
+      agreed < 0 ||
+      paid < 0
+    ) {
+      setVoiceError(
+        "Enter a work date, agreed wage, and amount paid before confirming.",
+      );
+      return;
+    }
+    if (paid > agreed) {
+      setVoiceError("Paid amount cannot exceed agreed wage.");
+      return;
+    }
+
     setSaving(true);
     setVoiceError("");
     setSaveNotice("");
@@ -97,18 +169,19 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         audio_ref: savedAudio?.audio_ref || "",
         audio_sha256: savedAudio?.sha256 || "",
         transcript,
-        lang: draft.language,
-        work_date: draft.work_date,
-        site_name: draft.site_name,
-        counterparty_name: draft.counterparty_name,
-        work_type: draft.work_type,
-        hours: draft.hours,
-        days: draft.days,
-        agreed_inr: draft.agreed_amount_inr,
-        paid_inr: draft.paid_amount_inr,
+        lang: review.language,
+        work_date: review.work_date,
+        site_name: review.site_name.trim() || null,
+        counterparty_name: review.counterparty_name.trim() || null,
+        work_type: review.work_type.trim() || null,
+        hours: optionalNumber(review.hours),
+        days: optionalNumber(review.days),
+        agreed_inr: agreed,
+        paid_inr: paid,
       });
       await confirmEntry(created.id);
       setDraft(null);
+      setReview(null);
       setTranscript("");
       setSavedAudio(null);
       setSaveNotice("Entry saved and confirmed to your ledger.");
@@ -119,6 +192,13 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
       setSaving(false);
     }
   };
+
+  const parsedAgreed = review ? optionalNumber(review.agreed_amount_inr) : null;
+  const parsedPaid = review ? optionalNumber(review.paid_amount_inr) : null;
+  const computedDue =
+    parsedAgreed !== null && parsedPaid !== null
+      ? Math.max(0, Math.round((parsedAgreed - parsedPaid) * 100) / 100)
+      : draft?.due_amount_inr ?? 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -179,85 +259,179 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
         )}
 
         {saveNotice && (
-          <div className="bg-green-50 text-green-800 p-3 rounded-lg mb-4 text-sm">
+          <div
+            role="status"
+            className="bg-green-50 text-green-800 p-3 rounded-lg mb-4 text-sm"
+          >
             {saveNotice}
           </div>
         )}
 
-        {draft && (
-          <div className="bg-white rounded-lg shadow p-4 mb-6 space-y-3">
+        {draft && review && (
+          <section
+            className="bg-white rounded-lg border border-blue-200 shadow p-5 mb-6 space-y-4"
+            aria-labelledby="voice-review-title"
+          >
             <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-base">Voice Entry Draft</h3>
+              <h3 id="voice-review-title" className="font-semibold text-base">
+                Voice Entry Draft
+              </h3>
               <button
                 type="button"
                 onClick={() => {
                   setDraft(null);
+                  setReview(null);
                   setTranscript("");
                   setSavedAudio(null);
+                  setVoiceError("");
                 }}
+                disabled={saving}
                 className="text-xs text-gray-500 hover:text-gray-800"
               >
                 {t("common:cancel", "Cancel")}
               </button>
             </div>
-            <p className="text-xs text-gray-600 italic">
+
+            <p className="rounded bg-gray-50 p-3 text-xs text-gray-700 italic">
               &ldquo;{transcript}&rdquo;
             </p>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="text-gray-500">Date:</span> {draft.work_date}
-              </div>
-              <div>
-                <span className="text-gray-500">Site:</span>{" "}
-                {draft.site_name || "—"}
-              </div>
-              <div>
-                <span className="text-gray-500">Contractor:</span>{" "}
-                {draft.counterparty_name || "—"}
-              </div>
-              <div>
-                <span className="text-gray-500">Hours:</span>{" "}
-                {draft.hours ?? "—"}
-              </div>
-              <div>
-                <span className="text-gray-500">Agreed:</span> ₹
-                {draft.agreed_amount_inr ?? 0}
-              </div>
-              <div>
-                <span className="text-gray-500">Paid:</span> ₹
-                {draft.paid_amount_inr ?? 0}
-              </div>
-              <div className="col-span-2 font-semibold">
-                <span className="text-gray-500 font-normal">Due:</span> ₹
-                {draft.due_amount_inr ?? 0}
-              </div>
-            </div>
 
-            {draft.clarification_question && (
+            {(draft.clarification_question ||
+              draft.needs_clarification.length > 0) && (
               <div className="bg-amber-50 border border-amber-200 rounded p-3 space-y-2 text-sm">
                 <p className="font-medium text-amber-900">
-                  {draft.clarification_question}
+                  {draft.clarification_question ||
+                    "Please review the details marked for clarification."}
                 </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <TtsPlayer
-                    text={draft.clarification_question}
-                    lang={draft.language}
-                    audience="worker"
-                    autoPlay={false}
-                  />
-                  <VoiceButton
-                    lang={draft.language}
-                    mode="confirm"
-                    kind="narration"
-                    label="Answer by Voice"
-                    onTranscript={(ans) =>
-                      void handleClarificationTranscript(ans)
-                    }
-                    onError={(err) => setVoiceError(err.message)}
-                  />
-                </div>
+                {draft.needs_clarification.length > 0 && (
+                  <p className="text-xs text-amber-800">
+                    Review fields: {draft.needs_clarification.join(", ")}
+                  </p>
+                )}
+                {draft.clarification_question && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <TtsPlayer
+                      text={draft.clarification_question}
+                      lang={draft.language}
+                      audience="worker"
+                      autoPlay={false}
+                    />
+                    <VoiceButton
+                      lang={draft.language}
+                      mode="confirm"
+                      kind="narration"
+                      label="Answer by Voice"
+                      onTranscript={(ans) =>
+                        void handleClarificationTranscript(ans)
+                      }
+                      onError={(err) => setVoiceError(err.message)}
+                    />
+                  </div>
+                )}
               </div>
             )}
+
+            <div className="grid gap-3 sm:grid-cols-2 text-sm">
+              <label className="text-left">
+                <span className="text-gray-600">Work date *</span>
+                <input
+                  type="date"
+                  required
+                  value={review.work_date}
+                  onChange={(event) =>
+                    updateReview("work_date", event.target.value)
+                  }
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+              <label className="text-left">
+                <span className="text-gray-600">Contractor</span>
+                <input
+                  value={review.counterparty_name}
+                  onChange={(event) =>
+                    updateReview("counterparty_name", event.target.value)
+                  }
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+              <label className="text-left">
+                <span className="text-gray-600">Work site</span>
+                <input
+                  value={review.site_name}
+                  onChange={(event) =>
+                    updateReview("site_name", event.target.value)
+                  }
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+              <label className="text-left">
+                <span className="text-gray-600">Work type</span>
+                <input
+                  value={review.work_type}
+                  onChange={(event) =>
+                    updateReview("work_type", event.target.value)
+                  }
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+              <label className="text-left">
+                <span className="text-gray-600">Hours</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.25"
+                  value={review.hours}
+                  onChange={(event) =>
+                    updateReview("hours", event.target.value)
+                  }
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+              <label className="text-left">
+                <span className="text-gray-600">Days</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.25"
+                  value={review.days}
+                  onChange={(event) => updateReview("days", event.target.value)}
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+              <label className="text-left">
+                <span className="text-gray-600">Agreed (INR) *</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={review.agreed_amount_inr}
+                  onChange={(event) =>
+                    updateReview("agreed_amount_inr", event.target.value)
+                  }
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+              <label className="text-left">
+                <span className="text-gray-600">Paid (INR) *</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={review.paid_amount_inr}
+                  onChange={(event) =>
+                    updateReview("paid_amount_inr", event.target.value)
+                  }
+                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900"
+                />
+              </label>
+            </div>
+
+            <div className="text-sm font-semibold">
+              <span className="text-gray-500 font-normal">Due:</span> ₹
+              {computedDue}
+            </div>
 
             <Button
               onClick={() => void handleSaveAndConfirm()}
@@ -266,7 +440,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
             >
               {saving ? t("common:loading") : t("common:confirm", "Confirm")}
             </Button>
-          </div>
+          </section>
         )}
 
         {/* Quick stats */}

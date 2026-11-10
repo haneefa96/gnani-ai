@@ -136,7 +136,7 @@ describe('Home voice-to-ledger integration', () => {
     )
 
     fireEvent.click(screen.getByText('home:recordEntry'))
-    await waitFor(() => expect(screen.getByText('Basavanagudi')).toBeTruthy())
+    await waitFor(() => expect(screen.getByDisplayValue('Basavanagudi')).toBeTruthy())
 
     fireEvent.click(screen.getByText('Confirm'))
     await waitFor(() =>

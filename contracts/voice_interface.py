@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Protocol, List, Dict, Optional
-from datetime import datetime
+from dataclasses import dataclass
 
 
 class ExtractContext(ABC):
@@ -43,7 +43,7 @@ class EntryDraft(ABC):
     
     @property
     @abstractmethod
-    def work_date(self) -> str:
+    def work_date(self) -> Optional[str]:
         """Date of work in YYYY-MM-DD format."""
         pass
     
@@ -91,8 +91,8 @@ class EntryDraft(ABC):
     
     @property
     @abstractmethod
-    def due_amount_inr(self) -> int:
-        """Amount still due (calculated: agreed - paid)."""
+    def due_amount_inr(self) -> Optional[int]:
+        """Amount still due when both agreed and paid amounts are known."""
         pass
     
     @property
@@ -137,6 +137,16 @@ class VoiceService(Protocol):
     Developer B selects via VOICE_IMPL environment variable.
     """
     
+    @abstractmethod
+    async def transcribe_audio(
+        self,
+        audio: bytes,
+        content_type: str,
+        lang: str,
+    ) -> "TranscriptionResult":
+        """Transcribe worker audio without exposing provider credentials."""
+        pass
+
     @abstractmethod
     async def extract_entry(
         self,
@@ -202,6 +212,12 @@ class VoiceService(Protocol):
             Read-back text ready for TTS
         """
         pass
+
+
+@dataclass(frozen=True)
+class TranscriptionResult:
+    transcript: str
+    detected_language_code: Optional[str] = None
 
 
 # Cache key function for TTS

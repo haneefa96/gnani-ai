@@ -5,6 +5,8 @@ import {
   AUTH_EXPIRED_EVENT,
   changeWorkerPin,
   clearAuthSession,
+  confirmVoiceDraft,
+  createVoiceDraft,
   getAccessToken,
   getApiErrorMessage,
   getContractorApiErrorMessage,
@@ -223,6 +225,99 @@ describe('frontend authentication client', () => {
 
     await expect(getEntries()).resolves.toEqual(entries)
     expect(requestUrl).toBe('/entries/')
+  })
+
+  it('uploads the recorded blob and submits its reviewed confirmation with authentication', async () => {
+    storeAuthSession(createJwt(Math.floor(Date.now() / 1000) + 60), {
+      alias: 'worker-one',
+      language: 'en-IN',
+    })
+    const audio = new Blob(['test audio'], { type: 'audio/webm' })
+    const draft = {
+      draft_token: 'signed-draft',
+      transcript: 'Demo transcript',
+      work_date: '2026-11-10',
+      site_name: 'Demo Site',
+      counterparty_name: 'Demo Contractor',
+      work_type: null,
+      hours: 8,
+      days: null,
+      agreed_amount_inr: 1200,
+      paid_amount_inr: 300,
+      due_amount_inr: 900,
+      language: 'en-IN',
+      detected_language_code: 'en-IN',
+      field_confidence: {},
+      needs_clarification: [],
+      clarification_question: null,
+      voice_mode: 'fake' as const,
+    }
+    const requests: Array<{
+      url: string
+      contentType: unknown
+      authorization: unknown
+      data: unknown
+    }> = []
+    api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
+      requests.push({
+        url: config.url ?? '',
+        contentType: config.headers.get('Content-Type'),
+        authorization: config.headers.get('Authorization'),
+        data: config.data,
+      })
+      return {
+        data: requests.length === 1
+          ? draft
+          : {
+              id: 21,
+              work_date: '2026-11-10',
+              site_name: 'Demo Site',
+              counterparty_name: 'Demo Contractor',
+              hours: 8,
+              days: null,
+              agreed_inr: 1200,
+              paid_inr: 300,
+              due_inr: 900,
+              language: 'en-IN',
+              transcript: 'Demo transcript',
+              status: 'WORKER_CONFIRMED',
+              created_at: '2026-11-10T12:00:00',
+            },
+        status: requests.length === 1 ? 200 : 201,
+        statusText: 'OK',
+        headers: new AxiosHeaders(),
+        config,
+      }
+    }
+
+    await expect(createVoiceDraft(audio)).resolves.toEqual(draft)
+    await expect(confirmVoiceDraft(draft, audio, {
+      work_date: '2026-11-10',
+      site_name: 'Demo Site',
+      counterparty_name: 'Demo Contractor',
+      work_type: null,
+      hours: 8,
+      days: null,
+      agreed_amount_inr: 1200,
+      paid_amount_inr: 300,
+      language: 'en-IN',
+    })).resolves.toMatchObject({ status: 'WORKER_CONFIRMED', due_inr: 900 })
+
+    expect(requests.map(({ url }) => url)).toEqual([
+      '/entries/draft',
+      '/entries/draft/confirm',
+    ])
+    expect(requests[0].contentType).toBe('audio/webm')
+    expect(requests[0].data).toBe(audio)
+    expect(requests.map(({ authorization }) =>
+      typeof authorization === 'string' && authorization.startsWith('Bearer '),
+    )).toEqual([true, true])
+    expect(JSON.parse(requests[1].data as string)).toMatchObject({
+      draft_token: 'signed-draft',
+      audio_base64: btoa('test audio'),
+      agreed_amount_inr: 1200,
+      paid_amount_inr: 300,
+    })
   })
 
   it('uses the share token without sending worker auth and supports each contractor response', async () => {

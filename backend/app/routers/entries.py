@@ -4,21 +4,27 @@ Entries router - CRUD for wage entries.
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
+import json
 import secrets
-from datetime import datetime, timedelta
-from typing import List, Optional, Annotated, TYPE_CHECKING
+import uuid
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import List, Optional, Annotated, Union
 
-if TYPE_CHECKING:
-    from contracts.voice_interface import VoiceService
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, ValidationError
+from sqlalchemy.exc import SQLAlchemyError
+import jwt
 
+from contracts.voice_interface import ExtractContext
 from app.config import Settings
 from app.models import Entry, Worker, Counterparty, EntryStatusLog, ShareToken
 from app.db import SessionLocal
-from app.deps import CurrentWorker
+from app.deps import CurrentWorker, VoiceServiceDep
 from app.services.hashchain import HashChainService
 
 settings = Settings()
@@ -42,7 +48,6 @@ def get_hashchain_service() -> HashChainService:
 HashChainServiceDep = Annotated[HashChainService, Depends(get_hashchain_service)]
 
 
-# Pydantic models
 class EntryCreate(BaseModel):
     audio_ref: str
     transcript: str
@@ -58,6 +63,40 @@ class EntryCreate(BaseModel):
     paid_inr: Optional[float] = None
 
 
+class VoiceDraftReview(BaseModel):
+    draft_token: str
+    transcript: str
+    work_date: Optional[str]
+    site_name: Optional[str]
+    counterparty_name: Optional[str]
+    work_type: Optional[str]
+    hours: Optional[float]
+    days: Optional[float]
+    agreed_amount_inr: Optional[int]
+    paid_amount_inr: Optional[int]
+    due_amount_inr: Optional[int]
+    language: str
+    detected_language_code: Optional[str]
+    field_confidence: dict[str, float]
+    needs_clarification: list[str]
+    clarification_question: Optional[str]
+    voice_mode: str
+
+
+class ConfirmVoiceDraft(BaseModel):
+    draft_token: str
+    audio_base64: str = Field(..., max_length=12_000_000)
+    work_date: date
+    site_name: Optional[str] = Field(default=None, max_length=200)
+    counterparty_name: Optional[str] = Field(default=None, max_length=200)
+    work_type: Optional[str] = Field(default=None, max_length=200)
+    hours: Optional[float] = Field(default=None, ge=0)
+    days: Optional[float] = Field(default=None, ge=0)
+    agreed_amount_inr: int = Field(..., ge=0)
+    paid_amount_inr: int = Field(..., ge=0)
+    language: str = Field(..., min_length=2, max_length=16)
+
+
 class EntryCorrect(BaseModel):
     audio_ref: str
     transcript: str
@@ -69,6 +108,7 @@ class EntryResponse(BaseModel):
     work_date: str
     site_name: Optional[str]
     counterparty_name: Optional[str]
+    work_type: Optional[str] = None
     hours: Optional[float]
     days: Optional[float]
     agreed_inr: float
@@ -80,36 +120,79 @@ class EntryResponse(BaseModel):
     created_at: datetime
 
 
-class EntryDraft(BaseModel):
-    work_date: str
-    site_name: Optional[str]
-    counterparty_name: Optional[str]
-    hours: Optional[float]
-    days: Optional[float]
-    agreed_amount_inr: Optional[int]
-    paid_amount_inr: Optional[int]
-    due_amount_inr: int
-    field_confidence: dict
-    needs_clarification: list
-    clarification_question: Optional[str]
-    language: str
+class _WorkerExtractContext(ExtractContext):
+    def __init__(
+        self,
+        worker_id: int,
+        known_counterparties: list[str],
+        known_sites: list[str],
+    ) -> None:
+        self._worker_id = str(worker_id)
+        self._known_counterparties = known_counterparties
+        self._known_sites = known_sites
+
+    @property
+    def worker_id(self) -> str:
+        return self._worker_id
+
+    @property
+    def known_counterparties(self) -> list[str]:
+        return self._known_counterparties
+
+    @property
+    def known_sites(self) -> list[str]:
+        return self._known_sites
 
 
-@router.post("/draft", response_model=EntryResponse, status_code=status.HTTP_201_CREATED)
-async def create_entry_draft(
+def _entry_response(entry: Entry) -> EntryResponse:
+    return EntryResponse(
+        id=entry.id,
+        work_date=entry.work_date,
+        site_name=entry.site_name,
+        counterparty_name=entry.counterparty_name,
+        work_type=entry.work_type,
+        hours=float(entry.hours) if entry.hours is not None else None,
+        days=float(entry.days) if entry.days is not None else None,
+        agreed_inr=float(entry.agreed_inr),
+        paid_inr=float(entry.paid_inr),
+        due_inr=float(entry.due_inr),
+        language=entry.language,
+        transcript=entry.transcript,
+        status=entry.status,
+        created_at=entry.created_at,
+    )
+
+
+_AUDIO_TYPES = {
+    "audio/webm": ".webm",
+    "audio/ogg": ".ogg",
+    "audio/wav": ".wav",
+    "audio/x-wav": ".wav",
+    "audio/wave": ".wav",
+    "audio/mp4": ".m4a",
+    "audio/mpeg": ".mp3",
+}
+_MAX_AUDIO_BYTES = 8 * 1024 * 1024
+
+
+def _create_json_entry_draft(
     entry_data: EntryCreate,
-    current_worker_id: CurrentWorker,
-    hashchain_service: HashChainServiceDep,
-    db = Depends(get_db)
+    current_worker_id: int,
+    hashchain_service: HashChainService,
+    db,
 ) -> EntryResponse:
-    """Create a new entry draft."""
-    # Get the last entry to compute prev_hash
-    last_entry = db.query(Entry).filter(Entry.worker_id == current_worker_id).order_by(Entry.created_at.desc()).first()
-    
-    prev_hash = hashchain_service.GENESIS_HASH
-    if last_entry:
-        prev_hash = last_entry.entry_hash
-    
+    last_entry = (
+        db.query(Entry)
+        .filter(
+            Entry.worker_id == current_worker_id,
+            Entry.entry_hash.isnot(None),
+            Entry.entry_hash != "",
+        )
+        .order_by(Entry.created_at.desc(), Entry.id.desc())
+        .first()
+    )
+    prev_hash = last_entry.entry_hash if last_entry else hashchain_service.GENESIS_HASH
+
     # Always compute due amount in code (never trust client-supplied due_inr).
     agreed_amount = max(0.0, float(entry_data.agreed_inr or 0.0))
     paid_amount = max(0.0, float(entry_data.paid_inr or 0.0))
@@ -138,30 +221,326 @@ async def create_entry_draft(
         audio_uri=entry_data.audio_ref,
         audio_sha256=entry_data.audio_sha256 or "",
         prev_hash=prev_hash,
-        entry_hash="",  # Will be computed after worker confirmation
+        entry_hash="",
         status=Entry.STATUS_DRAFT,
         corrects_entry_id=None,
     )
-    
+
     db.add(entry)
     db.commit()
     db.refresh(entry)
-    
-    return EntryResponse(
-        id=entry.id,
-        work_date=entry.work_date,
-        site_name=entry.site_name,
-        counterparty_name=entry.counterparty_name,
-        hours=float(entry.hours) if entry.hours else None,
-        days=float(entry.days) if entry.days else None,
-        agreed_inr=float(entry.agreed_inr),
-        paid_inr=float(entry.paid_inr),
-        due_inr=float(entry.due_inr),
-        language=entry.language,
-        transcript=entry.transcript,
-        status=entry.status,
-        created_at=entry.created_at,
+    return _entry_response(entry)
+
+
+@router.post("/draft", response_model=Union[VoiceDraftReview, EntryResponse])
+async def create_entry_draft(
+    request: Request,
+    current_worker_id: CurrentWorker,
+    voice_service: VoiceServiceDep,
+    hashchain_service: HashChainServiceDep,
+    db=Depends(get_db),
+) -> VoiceDraftReview | JSONResponse:
+    """Handle either streaming-session JSON draft persistence or raw audio draft review."""
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type == "application/json":
+        raw_body = await request.body()
+        try:
+            payload = json.loads(raw_body)
+        except json.JSONDecodeError as error:
+            raise HTTPException(status_code=415, detail="Unsupported audio format") from error
+        if not isinstance(payload, dict):
+            raise HTTPException(status_code=415, detail="Unsupported audio format")
+        try:
+            entry_data = EntryCreate.model_validate(payload)
+        except ValidationError as error:
+            raise HTTPException(status_code=422, detail=error.errors()) from error
+        created = _create_json_entry_draft(
+            entry_data, current_worker_id, hashchain_service, db
+        )
+        return JSONResponse(status_code=201, content=created.model_dump(mode="json"))
+
+    if content_type not in _AUDIO_TYPES:
+        raise HTTPException(status_code=415, detail="Unsupported audio format")
+
+    if not hasattr(voice_service, "transcribe_audio"):
+        raise HTTPException(
+            status_code=503,
+            detail="Configured voice implementation does not support batch audio transcription",
+        )
+
+    audio_chunks: list[bytes] = []
+    audio_size = 0
+    async for chunk in request.stream():
+        audio_size += len(chunk)
+        if audio_size > _MAX_AUDIO_BYTES:
+            raise HTTPException(status_code=413, detail="Audio exceeds the 8 MB limit")
+        audio_chunks.append(chunk)
+    audio = b"".join(audio_chunks)
+    if not audio:
+        raise HTTPException(status_code=400, detail="Audio is empty")
+
+    worker = db.query(Worker).filter(Worker.id == current_worker_id).first()
+    if worker is None:
+        raise HTTPException(status_code=401, detail="Worker session is unavailable")
+
+    try:
+        transcription = await voice_service.transcribe_audio(
+            audio=audio,
+            content_type=content_type,
+            lang=worker.language or "hi-IN",
+        )
+        transcript = transcription.transcript.strip()
+        if not transcript:
+            raise ValueError("Transcription returned no text")
+
+        known_counterparties = [
+            row[0]
+            for row in db.query(Counterparty.display_name)
+            .filter(Counterparty.worker_id == current_worker_id)
+            .order_by(Counterparty.display_name)
+            .all()
+        ]
+        known_sites = [
+            row[0]
+            for row in db.query(Entry.site_name)
+            .filter(
+                Entry.worker_id == current_worker_id,
+                Entry.site_name.isnot(None),
+                Entry.site_name != "",
+            )
+            .distinct()
+            .all()
+        ]
+        extracted = await voice_service.extract_entry(
+            transcript=transcript,
+            lang=transcription.detected_language_code or worker.language or "hi-IN",
+            ctx=_WorkerExtractContext(
+                current_worker_id,
+                known_counterparties,
+                known_sites,
+            ),
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=422,
+            detail="Audio could not be transcribed or understood; please record again",
+        ) from error
+
+    needs_clarification = list(extracted.needs_clarification)
+    if extracted.work_date is not None:
+        try:
+            date.fromisoformat(extracted.work_date)
+        except ValueError:
+            if "work_date" not in needs_clarification:
+                needs_clarification.append("work_date")
+    for required_field, value in (
+        ("work_date", extracted.work_date),
+        ("agreed_amount_inr", extracted.agreed_amount_inr),
+        ("paid_amount_inr", extracted.paid_amount_inr),
+    ):
+        if value is None and required_field not in needs_clarification:
+            needs_clarification.append(required_field)
+
+    for field_name, value in (
+        ("agreed_amount_inr", extracted.agreed_amount_inr),
+        ("paid_amount_inr", extracted.paid_amount_inr),
+    ):
+        if value is not None and value < 0 and field_name not in needs_clarification:
+            needs_clarification.append(field_name)
+
+    due_amount = None
+    if extracted.agreed_amount_inr is not None and extracted.paid_amount_inr is not None:
+        candidate_due = extracted.agreed_amount_inr - extracted.paid_amount_inr
+        if candidate_due >= 0:
+            due_amount = candidate_due
+        elif "paid_amount_inr" not in needs_clarification:
+            needs_clarification.append("paid_amount_inr")
+
+    question = extracted.clarification_question
+    if needs_clarification and not question:
+        question = "Please review the highlighted details before confirming."
+
+    draft_token = jwt.encode(
+        {
+            "draft": True,
+            "worker_id": current_worker_id,
+            "transcript": transcript,
+            "audio_sha256": hashlib.sha256(audio).hexdigest(),
+            "content_type": content_type,
+            "voice_mode": settings.VOICE_IMPL.lower(),
+            "exp": datetime.utcnow() + timedelta(minutes=15),
+        },
+        settings.SECRET_KEY.get_secret_value(),
+        algorithm="HS256",
     )
+    return VoiceDraftReview(
+        draft_token=draft_token,
+        transcript=transcript,
+        work_date=extracted.work_date,
+        site_name=extracted.site_name,
+        counterparty_name=extracted.counterparty_name,
+        work_type=extracted.work_type,
+        hours=extracted.hours,
+        days=extracted.days,
+        agreed_amount_inr=extracted.agreed_amount_inr,
+        paid_amount_inr=extracted.paid_amount_inr,
+        due_amount_inr=due_amount,
+        language=extracted.language,
+        detected_language_code=(
+            transcription.detected_language_code
+            or extracted.detected_language_code
+        ),
+        field_confidence=extracted.field_confidence,
+        needs_clarification=needs_clarification,
+        clarification_question=question,
+        voice_mode=settings.VOICE_IMPL.lower(),
+    )
+
+
+@router.post("/draft/confirm", response_model=EntryResponse, status_code=status.HTTP_201_CREATED)
+async def confirm_voice_draft(
+    confirmation: ConfirmVoiceDraft,
+    current_worker_id: CurrentWorker,
+    hashchain_service: HashChainServiceDep,
+    db=Depends(get_db),
+) -> EntryResponse:
+    """Persist the reviewed entry only after the worker explicitly confirms it."""
+    try:
+        claims = jwt.decode(
+            confirmation.draft_token,
+            settings.SECRET_KEY.get_secret_value(),
+            algorithms=["HS256"],
+        )
+    except jwt.ExpiredSignatureError as error:
+        raise HTTPException(status_code=400, detail="Draft expired; record again") from error
+    except jwt.InvalidTokenError as error:
+        raise HTTPException(status_code=400, detail="Invalid draft; record again") from error
+
+    if claims.get("draft") is not True:
+        raise HTTPException(status_code=400, detail="Invalid draft; record again")
+    if claims.get("worker_id") != current_worker_id:
+        raise HTTPException(status_code=404, detail="Draft not found")
+    if claims.get("voice_mode") != settings.VOICE_IMPL.lower():
+        raise HTTPException(status_code=400, detail="Voice configuration changed; record again")
+    if confirmation.paid_amount_inr > confirmation.agreed_amount_inr:
+        raise HTTPException(
+            status_code=422,
+            detail="Paid amount cannot exceed the agreed amount",
+        )
+
+    try:
+        audio = base64.b64decode(confirmation.audio_base64, validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise HTTPException(status_code=400, detail="Invalid audio data") from error
+    if not audio or len(audio) > _MAX_AUDIO_BYTES:
+        raise HTTPException(status_code=400, detail="Invalid audio data")
+    if hashlib.sha256(audio).hexdigest() != claims.get("audio_sha256"):
+        raise HTTPException(status_code=400, detail="Audio does not match the reviewed draft")
+
+    content_type = claims.get("content_type")
+    extension = _AUDIO_TYPES.get(content_type)
+    if extension is None:
+        raise HTTPException(status_code=400, detail="Invalid audio format")
+
+    audio_hash = hashlib.sha256(audio).hexdigest()
+    existing_entry = (
+        db.query(Entry)
+        .filter(
+            Entry.worker_id == current_worker_id,
+            Entry.audio_sha256 == audio_hash,
+        )
+        .first()
+    )
+    if existing_entry is not None:
+        return _entry_response(existing_entry)
+
+    audio_path = Path(settings.AUDIO_STORAGE_PATH) / f"{uuid.uuid4().hex}{extension}"
+    try:
+        audio_path.parent.mkdir(parents=True, exist_ok=True)
+        audio_path.write_bytes(audio)
+    except OSError as error:
+        raise HTTPException(status_code=500, detail="Unable to store entry audio") from error
+
+    created_at = datetime.utcnow()
+    previous_entry = (
+        db.query(Entry)
+        .filter(
+            Entry.worker_id == current_worker_id,
+            Entry.entry_hash.isnot(None),
+            Entry.entry_hash != "",
+        )
+        .order_by(Entry.created_at.desc())
+        .first()
+    )
+    previous_hash = (
+        previous_entry.entry_hash if previous_entry else hashchain_service.GENESIS_HASH
+    )
+    transcript = claims["transcript"]
+    transcript_hash = hashlib.sha256(transcript.encode("utf-8")).hexdigest()
+    due_amount = confirmation.agreed_amount_inr - confirmation.paid_amount_inr
+    entry = Entry(
+        worker_id=current_worker_id,
+        counterparty_id=None,
+        work_date=confirmation.work_date.isoformat(),
+        site_name=confirmation.site_name,
+        counterparty_name=confirmation.counterparty_name,
+        work_type=confirmation.work_type,
+        hours=confirmation.hours,
+        days=confirmation.days,
+        agreed_inr=confirmation.agreed_amount_inr,
+        paid_inr=confirmation.paid_amount_inr,
+        due_inr=due_amount,
+        language=confirmation.language,
+        transcript=transcript,
+        transcript_sha256=transcript_hash,
+        audio_uri=str(audio_path),
+        audio_sha256=audio_hash,
+        prev_hash=previous_hash,
+        entry_hash="",
+        status=Entry.STATUS_WORKER_CONFIRMED,
+        corrects_entry_id=None,
+        created_at=created_at,
+    )
+    entry.entry_hash = hashchain_service.compute_entry_hash(
+        {
+            "worker_id": current_worker_id,
+            "work_date": entry.work_date,
+            "site_name": entry.site_name,
+            "counterparty_name": entry.counterparty_name,
+            "hours": entry.hours,
+            "days": entry.days,
+            "agreed_inr": entry.agreed_inr,
+            "paid_inr": entry.paid_inr,
+            "transcript_sha256": transcript_hash,
+            "audio_sha256": audio_hash,
+            "created_at": created_at.isoformat(),
+        },
+        previous_hash,
+    )
+    db.add(entry)
+    db.add(
+        EntryStatusLog(
+            entry=entry,
+            from_status=None,
+            to_status=Entry.STATUS_WORKER_CONFIRMED,
+            actor="worker",
+        )
+    )
+    try:
+        db.commit()
+        db.refresh(entry)
+    except SQLAlchemyError as error:
+        db.rollback()
+        try:
+            audio_path.unlink(missing_ok=True)
+        except OSError as cleanup_error:
+            raise HTTPException(
+                status_code=500,
+                detail="Entry save failed and temporary audio cleanup failed",
+            ) from cleanup_error
+        raise HTTPException(status_code=500, detail="Unable to save confirmed entry") from error
+
+    return _entry_response(entry)
 
 
 @router.get("/", response_model=List[EntryResponse])
@@ -178,8 +557,9 @@ async def get_entries(
             work_date=e.work_date,
             site_name=e.site_name,
             counterparty_name=e.counterparty_name,
-            hours=float(e.hours) if e.hours else None,
-            days=float(e.days) if e.days else None,
+            work_type=e.work_type,
+            hours=float(e.hours) if e.hours is not None else None,
+            days=float(e.days) if e.days is not None else None,
             agreed_inr=float(e.agreed_inr),
             paid_inr=float(e.paid_inr),
             due_inr=float(e.due_inr),
@@ -209,8 +589,9 @@ async def get_entry(
         work_date=entry.work_date,
         site_name=entry.site_name,
         counterparty_name=entry.counterparty_name,
-        hours=float(entry.hours) if entry.hours else None,
-        days=float(entry.days) if entry.days else None,
+        work_type=entry.work_type,
+        hours=float(entry.hours) if entry.hours is not None else None,
+        days=float(entry.days) if entry.days is not None else None,
         agreed_inr=float(entry.agreed_inr),
         paid_inr=float(entry.paid_inr),
         due_inr=float(entry.due_inr),
@@ -241,6 +622,23 @@ async def confirm_entry(
     # Verify state transition
     if Entry.STATUS_WORKER_CONFIRMED not in Entry.VALID_TRANSITIONS.get(entry.status, set()):
         raise HTTPException(status_code=400, detail="Invalid state transition")
+
+    previous_confirmed = (
+        db.query(Entry)
+        .filter(
+            Entry.worker_id == current_worker_id,
+            Entry.id != entry.id,
+            Entry.entry_hash.isnot(None),
+            Entry.entry_hash != "",
+        )
+        .order_by(Entry.created_at.desc(), Entry.id.desc())
+        .first()
+    )
+    entry.prev_hash = (
+        previous_confirmed.entry_hash
+        if previous_confirmed
+        else hashchain_service.GENESIS_HASH
+    )
     
     # Compute entry hash
     entry_dict = {
@@ -279,8 +677,9 @@ async def confirm_entry(
         work_date=entry.work_date,
         site_name=entry.site_name,
         counterparty_name=entry.counterparty_name,
-        hours=float(entry.hours) if entry.hours else None,
-        days=float(entry.days) if entry.days else None,
+        work_type=entry.work_type,
+        hours=float(entry.hours) if entry.hours is not None else None,
+        days=float(entry.days) if entry.days is not None else None,
         agreed_inr=float(entry.agreed_inr),
         paid_inr=float(entry.paid_inr),
         due_inr=float(entry.due_inr),
@@ -338,8 +737,9 @@ async def create_correction(
         work_date=new_entry.work_date,
         site_name=new_entry.site_name,
         counterparty_name=new_entry.counterparty_name,
-        hours=float(new_entry.hours) if new_entry.hours else None,
-        days=float(new_entry.days) if new_entry.days else None,
+        work_type=new_entry.work_type,
+        hours=float(new_entry.hours) if new_entry.hours is not None else None,
+        days=float(new_entry.days) if new_entry.days is not None else None,
         agreed_inr=float(new_entry.agreed_inr),
         paid_inr=float(new_entry.paid_inr),
         due_inr=float(new_entry.due_inr),
