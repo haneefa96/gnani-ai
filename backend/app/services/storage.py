@@ -8,7 +8,10 @@ import hashlib
 import uuid
 from pathlib import Path
 
-from backend.app.config import Settings
+try:
+    from app.config import Settings
+except ImportError:
+    from backend.app.config import Settings
 
 settings = Settings()
 

@@ -21,12 +21,20 @@ repository_dir = backend_dir.parent
 if str(repository_dir) not in sys.path:
     sys.path.insert(0, str(repository_dir))
 
-from backend.voice.router import (
-    get_audio_store as get_voice_audio_store,
-)
-from backend.voice.router import (
-    router as voice_router,
-)
+try:
+    from backend.voice.router import (
+        get_audio_store as get_voice_audio_store,
+    )
+    from backend.voice.router import (
+        router as voice_router,
+    )
+except ModuleNotFoundError:
+    from voice.router import (
+        get_audio_store as get_voice_audio_store,
+    )
+    from voice.router import (
+        router as voice_router,
+    )
 
 from app.config import Settings
 from app.db import Base, engine

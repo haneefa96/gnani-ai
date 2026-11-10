@@ -1,0 +1,30 @@
+[project]
+name = "saakshi-backend"
+version = "1.0.0"
+description = "Saakshi — Worker-Held Voice Wage Ledger API"
+requires-python = ">=3.11"
+dependencies = [
+    "saakshi-contracts",
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.30.0",
+    "sqlalchemy==2.0.35",
+    "alembic==1.13.0",
+    "psycopg[binary]>=3.2,<4",
+    "pydantic==2.9.0",
+    "pydantic-settings==2.6.0",
+    "httpx==0.27.0",
+    "reportlab==4.2.2",
+    "passlib[bcrypt]==1.7.4",
+    "pyjwt==2.9.0",
+    "bcrypt==3.2.2",
+    "websockets>=13.0,<16.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+    "jsonschema>=4.22.0,<5.0.0",
+]
+
+[tool.uv.sources]
+saakshi-contracts = { path = "../contracts" }
+
+[tool.vercel]
+entrypoint = "app.main:app"
+

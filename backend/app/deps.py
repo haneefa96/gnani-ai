@@ -4,6 +4,7 @@ Dependency injection helpers.
 
 from __future__ import annotations
 
+import importlib.util
 from collections.abc import Generator
 from typing import Annotated
 
@@ -39,7 +40,10 @@ def get_voice_service() -> VoiceService:
 
     if settings.VOICE_IMPL.lower() == "gnani":
         try:
-            from backend.voice.service import GnaniVoice
+            if importlib.util.find_spec("backend") is not None:
+                from backend.voice.service import GnaniVoice
+            else:
+                from voice.service import GnaniVoice
         except ModuleNotFoundError as error:
             raise HTTPException(
                 status_code=503,

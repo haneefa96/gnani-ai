@@ -6,8 +6,12 @@ import hashlib
 import uuid
 from pathlib import Path
 
-from backend.voice.models import AudioKind, SavedAudio
-from backend.voice.storage_stub import ensure_pcm16_16k_wav
+try:
+    from backend.voice.models import AudioKind, SavedAudio
+    from backend.voice.storage_stub import ensure_pcm16_16k_wav
+except ModuleNotFoundError:
+    from voice.models import AudioKind, SavedAudio
+    from voice.storage_stub import ensure_pcm16_16k_wav
 
 _VALID_KINDS = frozenset({"narration", "confirm", "consent", "dispute"})
 

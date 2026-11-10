@@ -70,6 +70,29 @@ class Settings(BaseSettings):
             return str(Path("/tmp/saakshi") / value)
         return value
 
+    @field_validator("FRONTEND_URL")
+    @classmethod
+    def resolve_vercel_frontend_url(cls, value: str) -> str:
+        if value == "http://localhost:5173":
+            vercel_host = os.environ.get(
+                "VERCEL_PROJECT_PRODUCTION_URL"
+            ) or os.environ.get("VERCEL_URL")
+            if vercel_host:
+                return f"https://{vercel_host.strip().rstrip('/')}"
+        return value
+
+    @field_validator("CORS_ORIGINS")
+    @classmethod
+    def resolve_vercel_cors_origins(cls, value: list[str]) -> list[str]:
+        origins = list(value)
+        for env_name in ("VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_URL"):
+            host = os.environ.get(env_name, "").strip().rstrip("/")
+            if host:
+                origin = f"https://{host}"
+                if origin not in origins:
+                    origins.append(origin)
+        return origins
+
     @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret_key(cls, value: SecretStr) -> SecretStr:
