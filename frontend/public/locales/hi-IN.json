@@ -7,13 +7,18 @@
     "settings": "सेटिंग्स",
     "cancel": "रद्द करें",
     "confirm": "पुष्टि करें",
+    "logout": "लॉग आउट",
     "emptyFields": "कृपया सभी क्षेत्र भरें",
+    "retry": "फिर से प्रयास करें",
     "enterAlias": "अपना उपनाम दर्ज करें",
     "pin": "पिन",
     "register": "पंजीकरण करें",
     "donthaveAccount": "खाता नहीं है?",
     "welcomeBack": "वापसी पर स्वागत है",
-    "login": "लॉगिन"
+    "login": "लॉगिन",
+    "authFailed": "प्रमाणित नहीं किया जा सका। कृपया पुनः प्रयास करें।",
+    "aliasTooShort": "उपनाम कम से कम 3 अक्षर का होना चाहिए।",
+    "haveAccount": "पहले से खाता है?"
   },
   "onboarding": {
     "welcome": "साक्षी में आपका स्वागत है",
@@ -56,7 +61,7 @@
     "entries": "{{count}}",
     "totalEntries": "कुल प्रविष्टियाँ",
     "dueAmount": "₹{{amount}}",
-    "totalDue": "कुल बकाया",
+    "latestEntryDue": "नवीनतम प्रविष्टि का बकाया",
     "unconfirmed": "{{count}}",
     "unconfirmedEntries": "अपुष्टित",
     "recentEntries": "हाल की प्रविष्टियाँ",
@@ -71,10 +76,20 @@
     "entryCount": "{{count}} प्रविष्टियाँ रिकॉर्ड की गईं",
     "contractor": "ठेकेदार: {{name}}",
     "hours": "घंटे",
+    "days": "दिन",
     "agreed": "सहमत",
     "paid": "भुगतान",
     "due": "बकाया",
-    "noEntries": "अभी कोई प्रविष्टियाँ नहीं"
+    "noEntries": "अभी कोई प्रविष्टियाँ नहीं",
+    "statuses": {
+      "DRAFT": "मसौदा",
+      "WORKER_CONFIRMED": "श्रमिक द्वारा पुष्टि",
+      "SHARED": "साझा",
+      "CONTRACTOR_CONFIRMED": "ठेकेदार द्वारा पुष्टि",
+      "CONTRACTOR_DISPUTED": "ठेकेदार द्वारा विवादित",
+      "UNCONFIRMED": "अपुष्ट",
+      "DELETED": "हटाई गई"
+    }
   },
   "settings": {
     "title": "सेटिंग्स",

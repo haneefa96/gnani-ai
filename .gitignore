@@ -67,3 +67,46 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+
+# Python virtual environments
+.venv/
+.venv*/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and SQLite files
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated evidence and exports
+backend/app/data/audio/
+backend/app/data/evidence/
+*.pdf
+*.zip
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# IDE and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

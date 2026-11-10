@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 
-export default function Settings({ worker }: { worker: any }) {
+export default function Settings({ worker, onLogout }: { worker: any; onLogout: () => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [pin, setPin] = useState('')
@@ -17,9 +17,7 @@ export default function Settings({ worker }: { worker: any }) {
 
   const handleDeleteAccount = () => {
     if (confirm(t('settings:deleteAccountConfirm'))) {
-      // In real implementation, delete account via API
-      localStorage.removeItem('saakshi_worker')
-      navigate('/')
+      onLogout()
     }
   }
 
@@ -41,6 +39,10 @@ export default function Settings({ worker }: { worker: any }) {
 
       {/* Content */}
       <div className="container mx-auto p-4">
+        <Button onClick={onLogout} variant="secondary" className="w-full mb-6">
+          {t('common:logout')}
+        </Button>
+
         {/* Worker info */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <h2 className="font-semibold mb-4">{t('settings:workerInfo')}</h2>

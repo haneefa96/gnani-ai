@@ -7,13 +7,18 @@
     "settings": "সেটিংস",
     "cancel": "বাতিল করুন",
     "confirm": "যাচাই করুন",
+    "logout": "লগ আউট",
     "emptyFields": "অনুগ্রহ করে সমস্ত ক্ষেত্র পূরণ করুন",
+    "retry": "আবার চেষ্টা করুন",
     "enterAlias": "আপনার উপনাম লিখুন",
     "pin": "পিন",
     "register": "নিবন্ধন করুন",
     "donthaveAccount": "অ্যাকাউন্ট নেই?",
     "welcomeBack": "আপনাকে স্বাগতম",
-    "login": "লগইন"
+    "login": "লগইন",
+    "authFailed": "প্রমাণীকরণ করা যায়নি। আবার চেষ্টা করুন।",
+    "aliasTooShort": "উপনাম কমপক্ষে ৩ অক্ষরের হতে হবে।",
+    "haveAccount": "আগে থেকেই অ্যাকাউন্ট আছে?"
   },
   "onboarding": {
     "welcome": "সাক্ষীতে আপনাকে স্বাগতম",
@@ -56,7 +61,7 @@
     "entries": "{{count}}",
     "totalEntries": "মোট এন্ট্রি",
     "dueAmount": "₹{{amount}}",
-    "totalDue": "মোট বকেয়া",
+    "latestEntryDue": "সর্বশেষ এন্ট্রির বকেয়া",
     "unconfirmed": "{{count}}",
     "unconfirmedEntries": "অনিশ্চিত",
     "recentEntries": "সাম্প্রতিক এন্ট্রি",
@@ -71,10 +76,20 @@
     "entryCount": "{{count}} এন্ট্রি রেকর্ড করা হয়েছে",
     "contractor": "ঠিকাদার: {{name}}",
     "hours": "ঘন্টা",
+    "days": "দিন",
     "agreed": "সম্মত",
     "paid": "প্রদানকৃত",
     "due": "বকেয়া",
-    "noEntries": "এখনও কোনো এন্ট্রি নেই"
+    "noEntries": "এখনও কোনো এন্ট্রি নেই",
+    "statuses": {
+      "DRAFT": "খসড়া",
+      "WORKER_CONFIRMED": "শ্রমিক নিশ্চিত করেছেন",
+      "SHARED": "শেয়ার করা হয়েছে",
+      "CONTRACTOR_CONFIRMED": "ঠিকাদার নিশ্চিত করেছেন",
+      "CONTRACTOR_DISPUTED": "ঠিকাদার আপত্তি করেছেন",
+      "UNCONFIRMED": "অনিশ্চিত",
+      "DELETED": "মুছে ফেলা হয়েছে"
+    }
   },
   "settings": {
     "title": "সেটিংস",

@@ -114,6 +114,17 @@ def test_worker_ownership_and_legitimate_register_entry_share_evidence_workflow(
     first_worker_id, first_token = register(client, "worker-one")
     second_worker_id, second_token = register(client, "worker-two")
 
+    duplicate_alias = client.post(
+        "/api/auth/register",
+        json={"alias": "worker-one", "pin": "1234", "language": "en-IN"},
+    )
+    assert duplicate_alias.status_code == 400
+    incorrect_pin = client.post(
+        "/api/auth/login",
+        json={"alias": "worker-one", "pin": "9999"},
+    )
+    assert incorrect_pin.status_code == 401
+
     login = client.post(
         "/api/auth/login",
         json={"alias": "worker-one", "pin": "1234"},

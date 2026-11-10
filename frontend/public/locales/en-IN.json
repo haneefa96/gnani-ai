@@ -7,7 +7,9 @@
     "settings": "Settings",
     "cancel": "Cancel",
     "confirm": "Confirm",
+    "logout": "Log out",
     "emptyFields": "Please fill in all fields",
+    "retry": "Retry",
     "enterAlias": "Enter your alias",
     "pin": "PIN",
     "register": "Register",
@@ -28,7 +30,10 @@
     "register": "Register",
     "donthaveAccount": "Don't have an account?",
     "welcomeBack": "Welcome Back",
-    "login": "Login"
+    "login": "Login",
+    "authFailed": "Unable to authenticate. Please try again.",
+    "aliasTooShort": "Alias must be at least 3 characters.",
+    "haveAccount": "Already have an account?"
   },
   "export": {
     "title": "Generate Evidence Pack",
@@ -55,7 +60,7 @@
     "entries": "{{count}}",
     "totalEntries": "Total Entries",
     "dueAmount": "₹{{amount}}",
-    "totalDue": "Total Due",
+    "latestEntryDue": "Latest entry due",
     "unconfirmed": "{{count}}",
     "unconfirmedEntries": "Unconfirmed",
     "recentEntries": "Recent Entries",
@@ -70,10 +75,20 @@
     "entryCount": "{{count}} entries recorded",
     "contractor": "Contractor: {{name}}",
     "hours": "Hours",
+    "days": "Days",
     "agreed": "Agreed",
     "paid": "Paid",
     "due": "Due",
-    "noEntries": "No entries yet"
+    "noEntries": "No entries yet",
+    "statuses": {
+      "DRAFT": "Draft",
+      "WORKER_CONFIRMED": "Worker confirmed",
+      "SHARED": "Shared",
+      "CONTRACTOR_CONFIRMED": "Contractor confirmed",
+      "CONTRACTOR_DISPUTED": "Contractor disputed",
+      "UNCONFIRMED": "Unconfirmed",
+      "DELETED": "Deleted"
+    }
   },
   "settings": {
     "title": "Settings",

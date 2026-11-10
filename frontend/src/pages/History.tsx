@@ -1,46 +1,12 @@
-import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
+import { useEntries } from '../useEntries'
 
-export default function History({ worker }: { worker: any }) {
+export default function History() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [entries, setEntries] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // In real implementation, fetch from backend
-    const loadEntries = async () => {
-      setLoading(false)
-      // Sample data for demo
-      setEntries([
-        {
-          id: 1,
-          work_date: '2026-11-08',
-          site_name: 'Basavanagudi',
-          counterparty_name: 'Suresh',
-          hours: 8,
-          agreed_inr: 700,
-          paid_inr: 300,
-          due_inr: 400,
-          status: 'UNCONFIRMED',
-        },
-        {
-          id: 2,
-          work_date: '2026-11-07',
-          site_name: 'MG Road',
-          counterparty_name: 'Raj',
-          hours: 10,
-          agreed_inr: 800,
-          paid_inr: 800,
-          due_inr: 0,
-          status: 'CONTRACTOR_CONFIRMED',
-        },
-      ])
-    }
-    loadEntries()
-  }, [])
+  const { entries, loading, error, refresh } = useEntries()
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -79,6 +45,13 @@ export default function History({ worker }: { worker: any }) {
       <div className="container mx-auto p-4">
         {loading ? (
           <div className="text-center py-8">{t('common:loading')}</div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <p role="alert" className="text-red-700 mb-3">{error}</p>
+            <Button onClick={() => void refresh()} variant="secondary">
+              {t('common:retry')}
+            </Button>
+          </div>
         ) : (
           <>
             <div className="mb-6">
@@ -87,8 +60,13 @@ export default function History({ worker }: { worker: any }) {
               </p>
             </div>
 
-            <div className="space-y-4">
-              {entries.map((entry) => (
+            {entries.length === 0 ? (
+              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                {t('history:noEntries')}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {entries.map((entry) => (
                 <div
                   key={entry.id}
                   className="bg-white rounded-lg shadow p-4"
@@ -96,22 +74,30 @@ export default function History({ worker }: { worker: any }) {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(entry.status)}
+                        {getStatusBadge(t(`history:statuses.${entry.status}`, { defaultValue: entry.status }))}
                         <span className="text-gray-500 text-sm">
                           {entry.work_date}
                         </span>
                       </div>
-                      <h3 className="font-semibold mt-2">{entry.site_name}</h3>
+                      <h3 className="font-semibold mt-2">{entry.site_name || '—'}</h3>
                       <p className="text-gray-600 text-sm">
-                        {t('history:contractor', { name: entry.counterparty_name })}
+                        {t('history:contractor', { name: entry.counterparty_name || '—' })}
                       </p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t">
                     <div>
-                      <div className="text-xs text-gray-500">{t('history:hours')}</div>
-                      <div>{entry.hours}h</div>
+                      <div className="text-xs text-gray-500">
+                        {entry.hours !== null ? t('history:hours') : t('history:days')}
+                      </div>
+                      <div>
+                        {entry.hours !== null
+                          ? `${entry.hours}h`
+                          : entry.days !== null
+                            ? `${entry.days}d`
+                            : '—'}
+                      </div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500">{t('history:agreed')}</div>
@@ -132,8 +118,9 @@ export default function History({ worker }: { worker: any }) {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
