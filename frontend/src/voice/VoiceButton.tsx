@@ -18,13 +18,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   onError,
   onStateChange,
 }) => {
-  const {
-    status,
-    transcript,
-    detectedLanguage,
-    start,
-    stop,
-  } = useSttSocket({
+  const { status, transcript, detectedLanguage, start, stop } = useSttSocket({
     lang,
     mode,
     kind,
@@ -90,7 +84,11 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     if (disabled || isBusy) {
       return;
     }
-    if (interactionMode === "hold" && (e.key === " " || e.key === "Enter") && !e.repeat) {
+    if (
+      interactionMode === "hold" &&
+      (e.key === " " || e.key === "Enter") &&
+      !e.repeat
+    ) {
       e.preventDefault();
       if (!isActive) {
         holdingRef.current = true;
@@ -167,10 +165,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         </button>
       </div>
       {isActive && (
-        <div
-          aria-hidden="true"
-          className="flex items-center gap-1 h-5"
-        >
+        <div aria-hidden="true" className="flex items-center gap-1 h-5">
           {[0, 120, 240, 120, 0].map((delay, idx) => (
             <span
               key={idx}
@@ -186,4 +181,3 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     </div>
   );
 };
-

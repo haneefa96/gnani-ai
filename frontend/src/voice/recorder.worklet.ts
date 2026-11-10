@@ -4,7 +4,7 @@ import { PcmFrameFramer } from "./pcm";
 declare const sampleRate: number;
 declare function registerProcessor(
   name: string,
-  processorCtor: new () => AudioWorkletProcessorBase
+  processorCtor: new () => AudioWorkletProcessorBase,
 ): void;
 
 interface AudioWorkletPort {
@@ -18,13 +18,16 @@ declare class AudioWorkletProcessorBase {
   process(
     inputs: Float32Array[][],
     outputs: Float32Array[][],
-    parameters: Record<string, Float32Array>
+    parameters: Record<string, Float32Array>,
   ): boolean;
 }
 
 const BaseProcessor: typeof AudioWorkletProcessorBase =
-  (globalThis as unknown as { AudioWorkletProcessor: typeof AudioWorkletProcessorBase })
-    .AudioWorkletProcessor ??
+  (
+    globalThis as unknown as {
+      AudioWorkletProcessor: typeof AudioWorkletProcessorBase;
+    }
+  ).AudioWorkletProcessor ??
   class {
     readonly port!: AudioWorkletPort;
     process(): boolean {
@@ -46,7 +49,7 @@ class SaakshiPcmRecorderProcessor extends BaseProcessor {
         if (lastFrame) {
           const buf = lastFrame.buffer.slice(
             lastFrame.byteOffset,
-            lastFrame.byteOffset + lastFrame.byteLength
+            lastFrame.byteOffset + lastFrame.byteLength,
           );
           this.port.postMessage({ type: "frame", buffer: buf }, [buf]);
         }
@@ -68,7 +71,7 @@ class SaakshiPcmRecorderProcessor extends BaseProcessor {
     for (const frame of frames) {
       const buf = frame.buffer.slice(
         frame.byteOffset,
-        frame.byteOffset + frame.byteLength
+        frame.byteOffset + frame.byteLength,
       );
       this.port.postMessage({ type: "frame", buffer: buf }, [buf]);
     }
@@ -77,4 +80,3 @@ class SaakshiPcmRecorderProcessor extends BaseProcessor {
 }
 
 registerProcessor("saakshi-pcm-recorder", SaakshiPcmRecorderProcessor);
-

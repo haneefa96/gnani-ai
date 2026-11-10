@@ -44,35 +44,35 @@ export interface WageEntry {
 }
 
 export interface VoiceDraftReview {
-  draft_token: string
-  transcript: string
-  work_date: string | null
-  site_name: string | null
-  counterparty_name: string | null
-  work_type: string | null
-  hours: number | null
-  days: number | null
-  agreed_amount_inr: number | null
-  paid_amount_inr: number | null
-  due_amount_inr: number | null
-  language: string
-  detected_language_code: string | null
-  field_confidence: Record<string, number>
-  needs_clarification: string[]
-  clarification_question: string | null
-  voice_mode: 'fake' | 'gnani'
+  draft_token: string;
+  transcript: string;
+  work_date: string | null;
+  site_name: string | null;
+  counterparty_name: string | null;
+  work_type: string | null;
+  hours: number | null;
+  days: number | null;
+  agreed_amount_inr: number | null;
+  paid_amount_inr: number | null;
+  due_amount_inr: number | null;
+  language: string;
+  detected_language_code: string | null;
+  field_confidence: Record<string, number>;
+  needs_clarification: string[];
+  clarification_question: string | null;
+  voice_mode: "fake" | "gnani";
 }
 
 export interface VoiceDraftConfirmation {
-  work_date: string
-  site_name: string | null
-  counterparty_name: string | null
-  work_type: string | null
-  hours: number | null
-  days: number | null
-  agreed_amount_inr: number
-  paid_amount_inr: number
-  language: string
+  work_date: string;
+  site_name: string | null;
+  counterparty_name: string | null;
+  work_type: string | null;
+  hours: number | null;
+  days: number | null;
+  agreed_amount_inr: number;
+  paid_amount_inr: number;
+  language: string;
 }
 
 export interface ContractorEntry {
@@ -336,8 +336,12 @@ export async function confirmEntry(entryId: number): Promise<WageEntry> {
   return response.data;
 }
 
-export async function shareEntry(entryId: number): Promise<{ share_url: string }> {
-  const response = await api.post<{ share_url: string }>(`/entries/${entryId}/share`);
+export async function shareEntry(
+  entryId: number,
+): Promise<{ share_url: string }> {
+  const response = await api.post<{ share_url: string }>(
+    `/entries/${entryId}/share`,
+  );
   return response.data;
 }
 

@@ -4,16 +4,13 @@ Alembic environment configuration.
 
 from __future__ import annotations
 
-from logging.config import fileConfig
-
-from sqlalchemy import create_engine
-from sqlalchemy import pool
-
-from alembic import context
-
 # Import backend app models
 import sys
+from logging.config import fileConfig
 from pathlib import Path
+
+from alembic import context
+from sqlalchemy import create_engine, pool
 
 # Add the app directory to Python path
 app_dir = Path(__file__).resolve().parent.parent

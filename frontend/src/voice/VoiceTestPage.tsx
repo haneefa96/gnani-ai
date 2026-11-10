@@ -38,19 +38,27 @@ export const VoiceTestPage: React.FC = () => {
         body: JSON.stringify({ transcript, lang, context: {} }),
       });
       if (!res.ok) {
-        setError({ code: "EXTRACTION_FAILED", message: "Extraction request failed." });
+        setError({
+          code: "EXTRACTION_FAILED",
+          message: "Extraction request failed.",
+        });
         return;
       }
       const parsed = (await res.json()) as EntryDraft;
       setDraft(parsed);
     } catch {
-      setError({ code: "EXTRACTION_FAILED", message: "Extraction request failed." });
+      setError({
+        code: "EXTRACTION_FAILED",
+        message: "Extraction request failed.",
+      });
     }
   };
 
   return (
     <main className="max-w-xl mx-auto p-6 space-y-6 text-zinc-100">
-      <h1 className="text-2xl font-bold text-white">Voice Pipeline Test Harness</h1>
+      <h1 className="text-2xl font-bold text-white">
+        Voice Pipeline Test Harness
+      </h1>
 
       <div className="grid grid-cols-2 gap-4">
         <label className="flex flex-col gap-1 text-sm font-medium text-zinc-300">
@@ -94,7 +102,10 @@ export const VoiceTestPage: React.FC = () => {
       />
 
       {error && (
-        <div role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm">
+        <div
+          role="alert"
+          className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm"
+        >
           {error.code}: {error.message}
         </div>
       )}
@@ -107,7 +118,8 @@ export const VoiceTestPage: React.FC = () => {
         </p>
         {savedAudio && (
           <p className="text-xs text-zinc-400">
-            Saved WAV: {savedAudio.duration_ms} ms (sha256: {savedAudio.sha256.slice(0, 12)}…)
+            Saved WAV: {savedAudio.duration_ms} ms (sha256:{" "}
+            {savedAudio.sha256.slice(0, 12)}…)
           </p>
         )}
         <div className="flex gap-2 pt-2">
@@ -120,7 +132,9 @@ export const VoiceTestPage: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => setTtsText(transcript || "आज बसवनगुडी साइट पर आठ घंटे काम किया।")}
+            onClick={() =>
+              setTtsText(transcript || "आज बसवनगुडी साइट पर आठ घंटे काम किया।")
+            }
             className="px-4 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 text-sm font-medium hover:bg-zinc-700"
           >
             Speak via TTS
@@ -128,13 +142,7 @@ export const VoiceTestPage: React.FC = () => {
         </div>
       </section>
 
-      {ttsText && (
-        <TtsPlayer
-          text={ttsText}
-          lang={lang}
-          onError={setError}
-        />
-      )}
+      {ttsText && <TtsPlayer text={ttsText} lang={lang} onError={setError} />}
 
       {draft && (
         <pre className="p-4 rounded-xl bg-slate-900 text-slate-100 text-xs overflow-auto">
@@ -144,4 +152,3 @@ export const VoiceTestPage: React.FC = () => {
     </main>
   );
 };
-

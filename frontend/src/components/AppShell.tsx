@@ -1,7 +1,7 @@
-import React from 'react'
+import React from "react";
 
 interface AppShellProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
@@ -19,6 +19,5 @@ export function AppShell({ children }: AppShellProps) {
       />
       <div className="relative z-10">{children}</div>
     </div>
-  )
+  );
 }
-

@@ -1,7 +1,7 @@
-import React from 'react'
+import React from "react";
 
 interface AuthBackdropProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function AuthBackdrop({ children }: AuthBackdropProps) {
@@ -37,7 +37,13 @@ export function AuthBackdrop({ children }: AuthBackdropProps) {
         className="pointer-events-none absolute inset-0 h-full w-full opacity-40"
       >
         <defs>
-          <linearGradient id="saakshi-wave-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+          <linearGradient
+            id="saakshi-wave-grad"
+            x1="0%"
+            y1="50%"
+            x2="100%"
+            y2="50%"
+          >
             <stop offset="0%" stopColor="#22d3ee" stopOpacity="0" />
             <stop offset="30%" stopColor="#22d3ee" stopOpacity="0.45" />
             <stop offset="50%" stopColor="#34d399" stopOpacity="0.7" />
@@ -88,10 +94,18 @@ export function AuthBackdrop({ children }: AuthBackdropProps) {
       </svg>
 
       {/* 5. Subtle SVG film-grain noise texture */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.035]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+      >
         <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
           <filter id="saakshi-noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch" />
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.82"
+              numOctaves="3"
+              stitchTiles="stitch"
+            />
           </filter>
           <rect width="100%" height="100%" filter="url(#saakshi-noise)" />
         </svg>
@@ -102,5 +116,5 @@ export function AuthBackdrop({ children }: AuthBackdropProps) {
         {children}
       </div>
     </div>
-  )
+  );
 }

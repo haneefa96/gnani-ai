@@ -4,16 +4,18 @@ Dependency injection helpers.
 
 from __future__ import annotations
 
-from typing import Generator, Annotated, Optional
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from collections.abc import Generator
+from typing import Annotated
+
 import jwt
+from contracts.voice_interface import VoiceService
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.db import SessionLocal
 from app.services.hashchain import HashChainService
-from contracts.voice_interface import VoiceService
 
 settings = Settings()
 security = HTTPBearer(auto_error=False)
@@ -32,6 +34,7 @@ def get_voice_service() -> VoiceService:
     """Get voice service implementation."""
     if settings.VOICE_IMPL.lower() == "fake":
         from contracts.fake_voice import FakeVoice
+
         return FakeVoice()
 
     if settings.VOICE_IMPL.lower() == "gnani":
@@ -56,7 +59,7 @@ def get_hashchain_service() -> HashChainService:
 
 
 def get_current_worker(
-    auth: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)]
+    auth: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
 ) -> int:
     """Get current worker ID from JWT token."""
     if auth is None:
@@ -74,7 +77,11 @@ def get_current_worker(
             algorithms=["HS256"],
         )
         worker_id = payload.get("worker_id")
-        if not isinstance(worker_id, int) or isinstance(worker_id, bool) or worker_id < 1:
+        if (
+            not isinstance(worker_id, int)
+            or isinstance(worker_id, bool)
+            or worker_id < 1
+        ):
             raise HTTPException(status_code=401, detail="Invalid token payload")
         return worker_id
     except jwt.ExpiredSignatureError:

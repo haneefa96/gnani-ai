@@ -138,9 +138,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
     key: K,
     value: ReviewForm[K],
   ) => {
-    setReview((current) =>
-      current ? { ...current, [key]: value } : current,
-    );
+    setReview((current) => (current ? { ...current, [key]: value } : current));
   };
 
   const handleSaveAndConfirm = async () => {
@@ -201,7 +199,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
   const computedDue =
     parsedAgreed !== null && parsedPaid !== null
       ? Math.max(0, Math.round((parsedAgreed - parsedPaid) * 100) / 100)
-      : draft?.due_amount_inr ?? 0;
+      : (draft?.due_amount_inr ?? 0);
 
   return (
     <AppShell>
@@ -274,7 +272,9 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                 1
               </span>
               <div>
-                <div className="text-xs font-semibold text-zinc-100">Hold &amp; speak</div>
+                <div className="text-xs font-semibold text-zinc-100">
+                  Hold &amp; speak
+                </div>
                 <div className="text-[11px] text-zinc-400 leading-snug">
                   Say site, contractor, hours &amp; pay
                 </div>
@@ -285,7 +285,9 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                 2
               </span>
               <div>
-                <div className="text-xs font-semibold text-zinc-100">Check or edit</div>
+                <div className="text-xs font-semibold text-zinc-100">
+                  Check or edit
+                </div>
                 <div className="text-[11px] text-zinc-400 leading-snug">
                   Review extracted draft fields
                 </div>
@@ -296,7 +298,9 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
                 3
               </span>
               <div>
-                <div className="text-xs font-semibold text-zinc-100">Confirm &amp; export</div>
+                <div className="text-xs font-semibold text-zinc-100">
+                  Confirm &amp; export
+                </div>
                 <div className="text-[11px] text-zinc-400 leading-snug">
                   Lock proof &amp; download PDF/ZIP
                 </div>
@@ -554,10 +558,7 @@ export default function Home({ worker }: { worker: WorkerProfile }) {
               {t("home:viewAll")}
             </button>
           </div>
-          <div
-            className="obsidian-card rounded-2xl p-4"
-            aria-live="polite"
-          >
+          <div className="obsidian-card rounded-2xl p-4" aria-live="polite">
             {loading ? (
               <div className="text-center text-zinc-400 py-8 text-sm">
                 {t("common:loading")}

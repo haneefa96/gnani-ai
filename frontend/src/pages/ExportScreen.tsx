@@ -291,10 +291,14 @@ export default function ExportScreen() {
             <div className="text-left bg-zinc-950/90 border border-zinc-800 rounded-xl p-3.5 text-xs text-zinc-300 space-y-1.5">
               <div>
                 <span className="font-semibold text-zinc-200">Entries:</span>{" "}
-                <span className="tabular-nums font-mono text-cyan-300">{pack.entry_count}</span>
+                <span className="tabular-nums font-mono text-cyan-300">
+                  {pack.entry_count}
+                </span>
               </div>
               <div className="break-all">
-                <span className="font-semibold text-zinc-200">Chain Head Hash:</span>{" "}
+                <span className="font-semibold text-zinc-200">
+                  Chain Head Hash:
+                </span>{" "}
                 <code className="font-mono text-emerald-300">
                   {pack.chain_head_hash || "NONE"}
                 </code>

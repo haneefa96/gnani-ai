@@ -204,8 +204,15 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
         }
 
         if (stoppingRef.current) {
-          if (ev.code !== 1000 && !audioSavedRef.current && !serverErrorRef.current) {
-            emitError("STT_CONNECTION_LOST", "Voice connection dropped before saving audio.");
+          if (
+            ev.code !== 1000 &&
+            !audioSavedRef.current &&
+            !serverErrorRef.current
+          ) {
+            emitError(
+              "STT_CONNECTION_LOST",
+              "Voice connection dropped before saving audio.",
+            );
           } else {
             setStatus((prev) => (prev === "error" ? "error" : "idle"));
           }
@@ -220,22 +227,34 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
         }
 
         const maxRetries = optionsRef.current.maxReconnectAttempts ?? 2;
-        if (reconnectAttemptsRef.current < maxRetries && mediaStreamRef.current) {
+        if (
+          reconnectAttemptsRef.current < maxRetries &&
+          mediaStreamRef.current
+        ) {
           const attempt = reconnectAttemptsRef.current;
           reconnectAttemptsRef.current += 1;
           setStatus("connecting");
-          window.setTimeout(() => {
-            if (!stoppingRef.current && mediaStreamRef.current) {
-              void openWebSocket().catch(() => {
-                emitError("STT_CONNECTION_LOST", "Lost connection to voice server.");
-                cleanupMedia();
-              });
-            }
-          }, 300 * 2 ** attempt);
+          window.setTimeout(
+            () => {
+              if (!stoppingRef.current && mediaStreamRef.current) {
+                void openWebSocket().catch(() => {
+                  emitError(
+                    "STT_CONNECTION_LOST",
+                    "Lost connection to voice server.",
+                  );
+                  cleanupMedia();
+                });
+              }
+            },
+            300 * 2 ** attempt,
+          );
           return;
         }
 
-        emitError("STT_CONNECTION_LOST", "Voice connection closed unexpectedly.");
+        emitError(
+          "STT_CONNECTION_LOST",
+          "Voice connection closed unexpectedly.",
+        );
         cleanupMedia();
       };
     });
@@ -272,7 +291,7 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
         code,
         code === "MIC_DENIED"
           ? "Microphone permission was denied."
-          : "Unable to access microphone."
+          : "Unable to access microphone.",
       );
       return;
     }
@@ -302,7 +321,9 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
       const worklet = new AudioWorkletNode(audioCtx, "saakshi-pcm-recorder");
       workletNodeRef.current = worklet;
 
-      worklet.port.onmessage = (event: MessageEvent<{ type?: string; buffer?: ArrayBuffer }>) => {
+      worklet.port.onmessage = (
+        event: MessageEvent<{ type?: string; buffer?: ArrayBuffer }>,
+      ) => {
         if (event.data?.type === "frame" && event.data.buffer) {
           frameQueueRef.current.push(event.data.buffer);
         }
@@ -312,7 +333,10 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
       await openWebSocket();
     } catch {
       cleanupMedia();
-      emitError("STT_CONNECTION_LOST", "Could not initialize voice recording stream.");
+      emitError(
+        "STT_CONNECTION_LOST",
+        "Could not initialize voice recording stream.",
+      );
     }
   }, [cleanupMedia, emitError, openWebSocket, status]);
 
@@ -329,7 +353,9 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
       await new Promise<void>((resolve) => {
         const prevHandler = worklet.port.onmessage;
         const timer = window.setTimeout(resolve, 150);
-        worklet.port.onmessage = (event: MessageEvent<{ type?: string; buffer?: ArrayBuffer }>) => {
+        worklet.port.onmessage = (
+          event: MessageEvent<{ type?: string; buffer?: ArrayBuffer }>,
+        ) => {
           prevHandler?.call(worklet.port, event);
           if (event.data?.type === "flushed") {
             window.clearTimeout(timer);
@@ -365,7 +391,10 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
         const timeoutId = window.setTimeout(() => {
           endResolveRef.current = null;
           serverErrorRef.current = true;
-          emitError("STT_TIMEOUT", "Timed out waiting for speech transcription.");
+          emitError(
+            "STT_TIMEOUT",
+            "Timed out waiting for speech transcription.",
+          );
           try {
             ws.close();
           } catch {

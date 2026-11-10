@@ -4,22 +4,24 @@ Authentication router.
 
 from __future__ import annotations
 
-from collections import deque
-from datetime import datetime, timedelta
-from math import ceil
 import re
+from collections import deque
+from datetime import UTC, datetime, timedelta
+from math import ceil
 from threading import Lock
 from time import monotonic
-from typing import Literal, Optional
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field, SecretStr, field_validator
-from passlib.hash import bcrypt
+from typing import Annotated, Literal
+
 import jwt
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from passlib.hash import bcrypt
+from pydantic import BaseModel, Field, SecretStr, field_validator
+from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.models import Worker
 from app.db import SessionLocal
 from app.deps import CurrentWorker
+from app.models import Worker
 
 
 def get_db():
@@ -29,6 +31,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 settings = Settings()
 router = APIRouter()
@@ -105,9 +108,9 @@ class WorkerCreate(BaseModel):
     alias: str = Field(..., min_length=3, max_length=50)
     pin: str = Field(..., min_length=4)
     language: str = "hi-IN"
-    consent_audio_uri: Optional[str] = None
-    consent_text_version: Optional[str] = None
-    consent_at: Optional[datetime] = None
+    consent_audio_uri: str | None = None
+    consent_text_version: str | None = None
+    consent_at: datetime | None = None
 
 
 class WorkerLogin(BaseModel):
@@ -138,13 +141,15 @@ class TokenResponse(BaseModel):
     language: str = "hi-IN"
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
     return jwt.encode(
         to_encode,
@@ -153,7 +158,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     )
 
 
-def verify_pin(alias: str, pin: str, db) -> Optional[Worker]:
+def verify_pin(alias: str, pin: str, db) -> Worker | None:
     """Verify worker PIN."""
     worker = db.query(Worker).filter(Worker.alias == alias).first()
     if not worker:
@@ -163,23 +168,24 @@ def verify_pin(alias: str, pin: str, db) -> Optional[Worker]:
     return worker
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+)
 async def register_worker(
     worker_data: WorkerCreate,
-    db = Depends(get_db)
+    db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
     """Register a new worker."""
     # Check if alias already exists
     existing = db.query(Worker).filter(Worker.alias == worker_data.alias).first()
     if existing:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Alias already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Alias already registered"
         )
-    
+
     # Hash the PIN before storing
     pin_hash = bcrypt.hash(worker_data.pin)
-    
+
     # Create worker with hashed PIN
     worker = Worker(
         alias=worker_data.alias,
@@ -187,18 +193,18 @@ async def register_worker(
         language=worker_data.language,
         consent_audio_uri=worker_data.consent_audio_uri,
         consent_text_version=worker_data.consent_text_version,
-        consent_at=worker_data.consent_at
+        consent_at=worker_data.consent_at,
     )
     db.add(worker)
     db.commit()
     db.refresh(worker)
-    
+
     # Create access token
     access_token = create_access_token(
         data={"worker_id": worker.id},
-        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    
+
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
@@ -211,7 +217,7 @@ async def register_worker(
 async def login_worker(
     login_data: WorkerLogin,
     request: Request,
-    db = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
     """Login a worker."""
     client_ip = _check_pin_rate_limit(request)
@@ -225,9 +231,9 @@ async def login_worker(
         )
     access_token = create_access_token(
         data={"worker_id": worker.id},
-        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    
+
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
@@ -240,7 +246,7 @@ async def login_worker(
 async def verify_worker_pin(
     login_data: WorkerLogin,
     request: Request,
-    db = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     """Verify worker PIN (for PIN lock screen)."""
     client_ip = _check_pin_rate_limit(request)
@@ -248,8 +254,7 @@ async def verify_worker_pin(
     if not worker:
         _record_pin_failure(client_ip)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid alias or PIN"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid alias or PIN"
         )
     return {"valid": True, "worker_id": worker.id}
 
@@ -259,7 +264,7 @@ async def change_worker_pin(
     pin_data: ChangePinRequest,
     request: Request,
     worker_id: CurrentWorker,
-    db = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, str]:
     """Change the authenticated worker's PIN after verifying the current PIN."""
     client_ip = _check_pin_rate_limit(request)
@@ -283,7 +288,7 @@ async def change_worker_pin(
 async def update_worker_language(
     payload: LanguageUpdateRequest,
     worker_id: CurrentWorker,
-    db = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, str]:
     """Update the authenticated worker's preferred UI/voice language."""
     worker = db.query(Worker).filter(Worker.id == worker_id).first()

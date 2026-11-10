@@ -22,11 +22,7 @@ export type ConfirmationResult = "yes" | "no" | "unclear";
 export type TtsAudience = "worker" | "contractor";
 
 export type SttStatus =
-  | "idle"
-  | "connecting"
-  | "recording"
-  | "processing"
-  | "error";
+  "idle" | "connecting" | "recording" | "processing" | "error";
 
 export interface SavedAudio {
   audio_ref: string;
@@ -57,10 +53,7 @@ export interface SttErrorEvent {
 }
 
 export type SttServerMessage =
-  | SttTranscriptEvent
-  | SttProcessingEvent
-  | SttAudioSavedEvent
-  | SttErrorEvent;
+  SttTranscriptEvent | SttProcessingEvent | SttAudioSavedEvent | SttErrorEvent;
 
 export interface VoiceErrorInfo {
   code: ErrorCode;
@@ -149,4 +142,3 @@ export interface TtsPlayerProps {
   onEnded?: () => void;
   onError?: (error: VoiceErrorInfo) => void;
 }
-

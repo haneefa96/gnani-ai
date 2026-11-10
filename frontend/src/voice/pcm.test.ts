@@ -20,7 +20,10 @@ describe("pcm helpers", () => {
     const out16kFrom44k = downsampleTo16k(input44k, 44_100);
     expect(out16kFrom44k.length).toBe(1600);
 
-    const passthrough = downsampleTo16k(new Float32Array([0.5, -0.5]), TARGET_SAMPLE_RATE);
+    const passthrough = downsampleTo16k(
+      new Float32Array([0.5, -0.5]),
+      TARGET_SAMPLE_RATE,
+    );
     expect(Array.from(passthrough)).toEqual([0.5, -0.5]);
   });
 
@@ -68,4 +71,3 @@ describe("pcm helpers", () => {
     expect(framer.flush()).toBeNull();
   });
 });
-

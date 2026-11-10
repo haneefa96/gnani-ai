@@ -59,10 +59,10 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Node.js 18
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
       - name: Install dependencies
         run: npm install
       - name: Run TypeScript check
@@ -80,10 +80,10 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Node.js 18
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
       - name: Install dependencies
         run: npm install
       - name: Run tests
@@ -101,4 +101,4 @@ jobs:
       - name: Validate JSON Schema
         run: |
           npm install -g ajv-cli
-          ajv validate -s contracts/schemas/entry_draft.schema.json -d /dev/null
+          ajv compile -s contracts/schemas/entry_draft.schema.json

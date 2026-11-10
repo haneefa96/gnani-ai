@@ -12,7 +12,7 @@ export const FRAME_BYTES = FRAME_SAMPLES * 2; // 1,024 bytes = 32 ms at 16 kHz m
  */
 export function downsampleTo16k(
   samples: Float32Array,
-  inputSampleRate: number
+  inputSampleRate: number,
 ): Float32Array {
   if (inputSampleRate <= 0 || !Number.isFinite(inputSampleRate)) {
     throw new Error(`Invalid input sample rate: ${inputSampleRate}`);
@@ -47,7 +47,8 @@ export function float32ToPcm16(samples: Float32Array): Int16Array {
   const out = new Int16Array(samples.length);
   for (let i = 0; i < samples.length; i += 1) {
     const clamped = Math.max(-1, Math.min(1, samples[i] ?? 0));
-    out[i] = clamped < 0 ? Math.round(clamped * 32768) : Math.round(clamped * 32767);
+    out[i] =
+      clamped < 0 ? Math.round(clamped * 32768) : Math.round(clamped * 32767);
   }
   return out;
 }
@@ -55,7 +56,10 @@ export function float32ToPcm16(samples: Float32Array): Int16Array {
 /**
  * Encode 512 Int16 samples into an explicit little-endian 1,024-byte Uint8Array frame.
  */
-function encodeFrameLittleEndian(samples: Int16Array, offset: number): Uint8Array {
+function encodeFrameLittleEndian(
+  samples: Int16Array,
+  offset: number,
+): Uint8Array {
   const frame = new Uint8Array(FRAME_BYTES);
   const view = new DataView(frame.buffer);
   for (let i = 0; i < FRAME_SAMPLES; i += 1) {
@@ -75,7 +79,7 @@ export interface SlicedFrames {
  */
 export function slicePcm16Frames(
   pcm16: Int16Array,
-  pendingTail?: Int16Array
+  pendingTail?: Int16Array,
 ): SlicedFrames {
   let combined: Int16Array;
   if (pendingTail && pendingTail.length > 0) {
@@ -131,4 +135,3 @@ export class PcmFrameFramer {
     this.remainder = new Int16Array(0);
   }
 }
-

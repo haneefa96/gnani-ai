@@ -1,69 +1,75 @@
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
-import { AuthBackdrop } from '../../components/AuthBackdrop'
-import { Button } from '../../components/Button'
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { AuthBackdrop } from "../../components/AuthBackdrop";
+import { Button } from "../../components/Button";
 import {
   getApiErrorMessage,
   registerWorker,
   SUPPORTED_LANGUAGE_OPTIONS,
   type AuthResponse,
   type WorkerProfile,
-} from '../../api'
+} from "../../api";
 
 export default function Onboarding({
   onLogin,
 }: {
-  onLogin: (response: AuthResponse, profile: WorkerProfile) => void
+  onLogin: (response: AuthResponse, profile: WorkerProfile) => void;
 }) {
-  const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
-  const [alias, setAlias] = useState('')
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const [alias, setAlias] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
-    const active = i18n.resolvedLanguage || i18n.language
+    const active = i18n.resolvedLanguage || i18n.language;
     return SUPPORTED_LANGUAGE_OPTIONS.some((lang) => lang.code === active)
       ? active
-      : 'hi-IN'
-  })
-  const [pin, setPin] = useState('')
-  const [confirmPin, setConfirmPin] = useState('')
-  const [step, setStep] = useState(1)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+      : "hi-IN";
+  });
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [step, setStep] = useState(1);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLanguageChange = (code: string) => {
-    setSelectedLanguage(code)
-    void i18n.changeLanguage(code)
-  }
+    setSelectedLanguage(code);
+    void i18n.changeLanguage(code);
+  };
 
   const handlePinSetup = async () => {
-    const normalizedAlias = alias.trim()
+    const normalizedAlias = alias.trim();
     if (normalizedAlias.length < 3) {
-      setError(t('onboarding:aliasTooShort'))
-      setStep(1)
-      return
+      setError(t("onboarding:aliasTooShort"));
+      setStep(1);
+      return;
     }
     if (!/^\d{4}$/.test(pin)) {
-      setError(t('onboarding:pinMustBe4Digits'))
-      return
+      setError(t("onboarding:pinMustBe4Digits"));
+      return;
     }
     if (pin !== confirmPin) {
-      setError(t('onboarding:pinsDoNotMatch'))
-      return
+      setError(t("onboarding:pinsDoNotMatch"));
+      return;
     }
 
-    setError('')
-    setLoading(true)
+    setError("");
+    setLoading(true);
     try {
-      const response = await registerWorker(normalizedAlias, pin, selectedLanguage)
-      onLogin(response, { alias: normalizedAlias, language: selectedLanguage })
-      navigate('/home', { replace: true })
+      const response = await registerWorker(
+        normalizedAlias,
+        pin,
+        selectedLanguage,
+      );
+      onLogin(response, { alias: normalizedAlias, language: selectedLanguage });
+      navigate("/home", { replace: true });
     } catch (registrationError) {
-      setError(getApiErrorMessage(registrationError, t('onboarding:authFailed')))
+      setError(
+        getApiErrorMessage(registrationError, t("onboarding:authFailed")),
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <AuthBackdrop>
@@ -76,12 +82,12 @@ export default function Onboarding({
           <div className="flex items-center gap-1.5 mb-2">
             <span
               className={`h-1.5 w-7 rounded-full transition-colors ${
-                step === 1 ? 'bg-cyan-400' : 'bg-emerald-400'
+                step === 1 ? "bg-cyan-400" : "bg-emerald-400"
               }`}
             />
             <span
               className={`h-1.5 w-7 rounded-full transition-colors ${
-                step === 2 ? 'bg-cyan-400' : 'bg-zinc-800'
+                step === 2 ? "bg-cyan-400" : "bg-zinc-800"
               }`}
             />
           </div>
@@ -89,7 +95,7 @@ export default function Onboarding({
             {step} / 2
           </span>
           <h1 className="text-2xl font-bold text-white text-center tracking-tight">
-            {step === 1 ? t('onboarding:welcome') : t('onboarding:setPin')}
+            {step === 1 ? t("onboarding:welcome") : t("onboarding:setPin")}
           </h1>
         </div>
 
@@ -109,21 +115,21 @@ export default function Onboarding({
                 htmlFor="worker-alias"
                 className="block text-sm font-medium text-zinc-300 mb-1.5"
               >
-                {t('onboarding:alias')}
+                {t("onboarding:alias")}
               </label>
               <input
                 id="worker-alias"
                 type="text"
                 value={alias}
                 onChange={(e) => setAlias(e.target.value)}
-                placeholder={t('onboarding:enterAlias')}
+                placeholder={t("onboarding:enterAlias")}
                 className="w-full px-3.5 py-2.5 border border-zinc-800 rounded-xl bg-zinc-950/90 text-zinc-100 placeholder:text-zinc-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none transition"
                 maxLength={50}
                 autoComplete="username"
               />
             </div>
             <p className="text-sm font-medium text-zinc-300 mb-2.5">
-              {t('onboarding:chooseLanguage')}
+              {t("onboarding:chooseLanguage")}
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               {SUPPORTED_LANGUAGE_OPTIONS.map((lang) => (
@@ -133,8 +139,8 @@ export default function Onboarding({
                   onClick={() => handleLanguageChange(lang.code)}
                   className={`p-3 rounded-xl border text-sm font-semibold transition-all ${
                     selectedLanguage === lang.code
-                      ? 'bg-cyan-400/15 text-cyan-200 border-cyan-400/60 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]'
-                      : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 hover:text-white'
+                      ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/60 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]"
+                      : "bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 hover:text-white"
                   }`}
                 >
                   {lang.name}
@@ -144,15 +150,15 @@ export default function Onboarding({
             <Button
               onClick={() => {
                 if (alias.trim().length < 3) {
-                  setError(t('onboarding:aliasTooShort'))
-                  return
+                  setError(t("onboarding:aliasTooShort"));
+                  return;
                 }
-                setError('')
-                setStep(2)
+                setError("");
+                setStep(2);
               }}
               className="mt-6 w-full"
             >
-              {t('common:next')}
+              {t("common:next")}
             </Button>
           </>
         )}
@@ -162,7 +168,7 @@ export default function Onboarding({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                  {t('onboarding:createPin')}
+                  {t("onboarding:createPin")}
                 </label>
                 <input
                   type="password"
@@ -176,7 +182,7 @@ export default function Onboarding({
               </div>
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                  {t('onboarding:confirmPin')}
+                  {t("onboarding:confirmPin")}
                 </label>
                 <input
                   type="password"
@@ -195,14 +201,14 @@ export default function Onboarding({
                 variant="secondary"
                 className="flex-1"
               >
-                {t('common:back')}
+                {t("common:back")}
               </Button>
               <Button
                 onClick={handlePinSetup}
                 disabled={loading}
                 className="flex-1"
               >
-                {loading ? t('common:loading') : t('common:save')}
+                {loading ? t("common:loading") : t("common:save")}
               </Button>
             </div>
           </>
@@ -210,17 +216,17 @@ export default function Onboarding({
 
         {step === 1 && (
           <p className="mt-5 pt-4 border-t border-white/[0.08] text-center text-sm text-zinc-400">
-            {t('onboarding:haveAccount')}{' '}
+            {t("onboarding:haveAccount")}{" "}
             <button
               type="button"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate("/login")}
               className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
             >
-              {t('onboarding:login')}
+              {t("onboarding:login")}
             </button>
           </p>
         )}
       </div>
     </AuthBackdrop>
-  )
+  );
 }

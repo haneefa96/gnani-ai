@@ -7,18 +7,19 @@ from __future__ import annotations
 import os
 import uuid
 import zipfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.models import EvidencePack, Entry, Worker
 from app.db import SessionLocal
 from app.deps import CurrentWorker
+from app.models import Entry, EvidencePack, Worker
 from app.services.hashchain import HashChainService
 from app.services.pdf import EvidencePDFService
 
@@ -63,13 +64,15 @@ def _parse_iso_date(value: str, field_name: str) -> datetime:
         ) from exc
 
 
-def _resolve_entry_audio_path(audio_uri: Optional[str]) -> Optional[Path]:
+def _resolve_entry_audio_path(audio_uri: str | None) -> Path | None:
     """Resolve an entry's audio_uri (filesystem path or local:// URI) to an existing file."""
     if not audio_uri:
         return None
     storage_root = Path(settings.AUDIO_STORAGE_PATH).resolve()
     if audio_uri.startswith("local://"):
-        candidate = (storage_root / audio_uri.removeprefix("local://").lstrip("/")).resolve()
+        candidate = (
+            storage_root / audio_uri.removeprefix("local://").lstrip("/")
+        ).resolve()
         if not candidate.is_relative_to(storage_root):
             return None
         return candidate if candidate.is_file() else None
@@ -111,7 +114,7 @@ def _resolve_owned_pack_file(
 async def build_evidence_pack(
     request: EvidencePackRequest,
     current_worker_id: CurrentWorker,
-    db=Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> EvidencePackResponse:
     """Build evidence pack strictly for the JWT-authenticated worker."""
     start_dt = _parse_iso_date(request.period_from, "period_from")
@@ -138,11 +141,14 @@ async def build_evidence_pack(
     )
 
     if not entries:
-        raise HTTPException(status_code=404, detail="No entries found for the specified period")
+        raise HTTPException(
+            status_code=404, detail="No entries found for the specified period"
+        )
 
     storage_dir = Path(settings.AUDIO_STORAGE_PATH)
     storage_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    now = datetime.now(UTC).replace(tzinfo=None)
+    stamp = now.strftime("%Y%m%d_%H%M%S")
     uid = uuid.uuid4().hex[:8]
     pdf_path = str(storage_dir / f"evidence_{current_worker_id}_{stamp}_{uid}.pdf")
     zip_path = str(storage_dir / f"evidence_{current_worker_id}_{stamp}_{uid}.zip")
@@ -175,7 +181,7 @@ async def build_evidence_pack(
 
     with zipfile.ZipFile(zip_path, "w") as zf:
         manifest = "Evidence Pack Manifest\n"
-        manifest += f"Generated: {datetime.utcnow().isoformat()}\n"
+        manifest += f"Generated: {now.isoformat()}\n"
         manifest += f"Worker ID: {current_worker_id}\n"
         manifest += f"Period: {period_from} to {period_to}\n\n"
         manifest += "Entries:\n"
@@ -198,7 +204,9 @@ async def build_evidence_pack(
                     added_audio.add(arcname)
 
     hashchain = HashChainService()
-    chain_entries = [e for e in entries if e.status != Entry.STATUS_DRAFT or e.entry_hash]
+    chain_entries = [
+        e for e in entries if e.status != Entry.STATUS_DRAFT or e.entry_hash
+    ]
     chain_head_hash = hashchain.get_chain_head(chain_entries) or ""
 
     evidence_pack = EvidencePack(
@@ -208,7 +216,7 @@ async def build_evidence_pack(
         pdf_uri=pdf_path,
         zip_uri=zip_path,
         chain_head_hash=chain_head_hash,
-        created_at=datetime.utcnow(),
+        created_at=now,
     )
     db.add(evidence_pack)
     db.commit()
@@ -229,7 +237,7 @@ async def build_evidence_pack(
 async def download_evidence_pdf(
     pack_id: int,
     current_worker_id: CurrentWorker,
-    db=Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> FileResponse:
     """Download the generated PDF for an evidence pack owned by the authenticated worker."""
     file_path = _resolve_owned_pack_file(pack_id, "pdf_uri", current_worker_id, db)
@@ -244,7 +252,7 @@ async def download_evidence_pdf(
 async def download_evidence_zip(
     pack_id: int,
     current_worker_id: CurrentWorker,
-    db=Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> FileResponse:
     """Download the generated ZIP archive for an evidence pack owned by the authenticated worker."""
     file_path = _resolve_owned_pack_file(pack_id, "zip_uri", current_worker_id, db)
@@ -258,7 +266,7 @@ async def download_evidence_zip(
 @router.get("/verify", response_model=dict)
 async def verify_chain(
     current_worker_id: CurrentWorker,
-    db=Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     """Verify hash chain integrity for the authenticated worker's ledger entries."""
     entries = (
@@ -271,7 +279,9 @@ async def verify_chain(
         .all()
     )
 
-    chain_entries = [e for e in entries if e.status != Entry.STATUS_DRAFT or e.entry_hash]
+    chain_entries = [
+        e for e in entries if e.status != Entry.STATUS_DRAFT or e.entry_hash
+    ]
     if not chain_entries:
         return {
             "valid": True,
@@ -288,6 +298,8 @@ async def verify_chain(
         "valid": is_valid,
         "mismatch_reason": mismatch_reason,
         "checked_entries": len(chain_entries),
-        "chain_head_hash": hashchain.get_chain_head(chain_entries) if is_valid else None,
+        "chain_head_hash": (
+            hashchain.get_chain_head(chain_entries) if is_valid else None
+        ),
         "message": None,
     }

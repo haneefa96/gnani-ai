@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { TtsPlayerProps, TtsQueueItem } from "./types";
 
 export const TtsPlayer: React.FC<TtsPlayerProps> = ({
@@ -204,4 +210,3 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({
     </div>
   );
 };
-

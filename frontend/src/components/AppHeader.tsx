@@ -1,31 +1,31 @@
-import React from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface AppHeaderProps {
-  title: string
-  subtitle?: string
-  onBack?: () => void
-  backLabel?: string
-  showNav?: boolean
-  rightSlot?: React.ReactNode
+  title: string;
+  subtitle?: string;
+  onBack?: () => void;
+  backLabel?: string;
+  showNav?: boolean;
+  rightSlot?: React.ReactNode;
 }
 
 const NAV_ITEMS = [
-  { path: '/home', label: 'Home' },
-  { path: '/history', label: 'History' },
-  { path: '/export', label: 'Export' },
-] as const
+  { path: "/home", label: "Home" },
+  { path: "/history", label: "History" },
+  { path: "/export", label: "Export" },
+] as const;
 
 export function AppHeader({
   title,
   subtitle,
   onBack,
-  backLabel = 'Back',
+  backLabel = "Back",
   showNav = false,
   rightSlot,
 }: AppHeaderProps) {
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <header className="sticky top-0 z-20 bg-[#07070A]/85 backdrop-blur-xl border-b border-white/[0.08] text-zinc-100">
@@ -75,7 +75,7 @@ export function AppHeader({
               className="hidden sm:flex items-center gap-1 rounded-xl bg-zinc-900/90 border border-zinc-800 p-1"
             >
               {NAV_ITEMS.map((item) => {
-                const active = location.pathname === item.path
+                const active = location.pathname === item.path;
                 return (
                   <button
                     key={item.path}
@@ -83,13 +83,13 @@ export function AppHeader({
                     onClick={() => navigate(item.path)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       active
-                        ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-zinc-950 shadow-sm'
-                        : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'
+                        ? "bg-gradient-to-r from-cyan-400 to-emerald-400 text-zinc-950 shadow-sm"
+                        : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
                     }`}
                   >
                     {item.label}
                   </button>
-                )
+                );
               })}
             </nav>
           )}
@@ -103,7 +103,7 @@ export function AppHeader({
           className="sm:hidden border-t border-white/[0.06] px-4 py-1.5 flex items-center gap-1.5"
         >
           {NAV_ITEMS.map((item) => {
-            const active = location.pathname === item.path
+            const active = location.pathname === item.path;
             return (
               <button
                 key={item.path}
@@ -111,16 +111,16 @@ export function AppHeader({
                 onClick={() => navigate(item.path)}
                 className={`flex-1 py-1.5 rounded-lg text-xs font-semibold text-center transition-all ${
                   active
-                    ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-zinc-950 shadow-sm'
-                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'
+                    ? "bg-gradient-to-r from-cyan-400 to-emerald-400 text-zinc-950 shadow-sm"
+                    : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
                 }`}
               >
                 {item.label}
               </button>
-            )
+            );
           })}
         </nav>
       )}
     </header>
-  )
+  );
 }
