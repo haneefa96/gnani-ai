@@ -22,6 +22,7 @@ FRAME_SAMPLES = 512
 FRAME_BYTES = FRAME_SAMPLES * PCM_SAMPLE_WIDTH  # 1,024 bytes
 FRAME_INTERVAL_S = 0.032  # 32 ms real-time cadence
 TRAILING_SILENCE_FRAMES = 25  # 800 ms zero PCM so VAD flushes last utterance
+POST_END_FLUSH_S = 1.5  # Settle window after trailing silence once >=1 segment arrived
 
 
 @dataclass(frozen=True)
@@ -143,12 +144,14 @@ class GnaniSttClient:
         backoff_base_s: float = 0.4,
         frame_interval_s: float = FRAME_INTERVAL_S,
         trailing_silence_frames: int = TRAILING_SILENCE_FRAMES,
+        post_end_flush_s: float = POST_END_FLUSH_S,
     ) -> None:
         self._settings = settings or load_voice_settings()
         self._max_retries = max_retries
         self._backoff_base_s = backoff_base_s
         self._frame_interval_s = frame_interval_s
         self._trailing_silence_frames = trailing_silence_frames
+        self._post_end_flush_s = post_end_flush_s
 
     async def connect_with_backoff(
         self,
@@ -233,6 +236,7 @@ class GnaniSttClient:
         )
         out_queue: asyncio.Queue[SttTranscriptEvent | Exception | None] = asyncio.Queue()
         stream_state = {"last_audio_at": time.monotonic(), "segment_counter": 0}
+        last_event_state: dict[str, float] = {"at": 0.0}
 
         async def _send_frame(frame: bytes) -> None:
             try:
@@ -325,9 +329,6 @@ class GnaniSttClient:
                         )
                         return
 
-                    if payload.get("is_final") is False:
-                        continue
-
                     text = ""
                     for key in ("transcript", "text", "result"):
                         val = payload.get(key)
@@ -335,6 +336,10 @@ class GnaniSttClient:
                             text = val.strip()
                             break
                     if not text:
+                        continue
+
+                    last_event_state["at"] = time.monotonic()
+                    if payload.get("is_final") is False:
                         continue
 
                     stream_state["segment_counter"] += 1
@@ -371,6 +376,7 @@ class GnaniSttClient:
         sender_task = asyncio.create_task(_sender())
         receiver_task = asyncio.create_task(_receiver())
         sender_done_at: float | None = None
+        flush_window = min(self._post_end_flush_s, self._settings.stt_timeout_s)
         try:
             # Wait for sender to complete, then wait boundedly for trailing VAD flush.
             while True:
@@ -378,14 +384,23 @@ class GnaniSttClient:
                     sender_done_at = time.monotonic()
 
                 if sender_done_at is not None and out_queue.empty():
-                    remaining = self._settings.stt_timeout_s - (time.monotonic() - sender_done_at)
-                    if remaining <= 0:
-                        raise VoiceError(
-                            ErrorCode.STT_TIMEOUT,
-                            "Timed out waiting for STT response.",
-                            status_code=504,
-                        )
-                    wait_timeout = remaining
+                    if stream_state["segment_counter"] > 0:
+                        # Persistent STT sockets stay open after delivering segments; settle
+                        # briefly after trailing silence/latest event, then close upstream cleanly.
+                        anchor = max(sender_done_at, last_event_state["at"])
+                        remaining = flush_window - (time.monotonic() - anchor)
+                        if remaining <= 0:
+                            break
+                        wait_timeout = remaining
+                    else:
+                        remaining = self._settings.stt_timeout_s - (time.monotonic() - sender_done_at)
+                        if remaining <= 0:
+                            raise VoiceError(
+                                ErrorCode.STT_TIMEOUT,
+                                "Timed out waiting for STT response.",
+                                status_code=504,
+                            )
+                        wait_timeout = remaining
                 else:
                     wait_timeout = min(0.2, self._settings.stt_timeout_s)
 
@@ -393,8 +408,12 @@ class GnaniSttClient:
                     item = await asyncio.wait_for(out_queue.get(), timeout=wait_timeout)
                 except TimeoutError as exc:
                     if sender_task.done() and sender_done_at is not None:
-                        elapsed = time.monotonic() - sender_done_at
-                        if elapsed >= self._settings.stt_timeout_s:
+                        now = time.monotonic()
+                        if stream_state["segment_counter"] > 0:
+                            anchor = max(sender_done_at, last_event_state["at"])
+                            if (now - anchor) >= flush_window:
+                                break
+                        elif (now - sender_done_at) >= self._settings.stt_timeout_s:
                             raise VoiceError(
                                 ErrorCode.STT_TIMEOUT,
                                 "Timed out waiting for STT response.",

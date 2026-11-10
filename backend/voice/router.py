@@ -146,6 +146,7 @@ async def stt_websocket_proxy(
     recorded_pcm = bytearray()
     pcm_queue: asyncio.Queue[bytes | None] = asyncio.Queue()
     client_ended = False
+    upstream_done = False
 
     async def _read_browser_frames() -> None:
         nonlocal client_ended
@@ -159,7 +160,8 @@ async def stt_websocket_proxy(
                     chunk = msg["bytes"]
                     if chunk:
                         recorded_pcm.extend(chunk)
-                        await pcm_queue.put(chunk)
+                        if not upstream_done:
+                            await pcm_queue.put(chunk)
                 elif msg.get("text") is not None:
                     try:
                         ctrl = json.loads(msg["text"])
@@ -209,21 +211,34 @@ async def stt_websocket_proxy(
             )
         else:
             client = GnaniSttClient(settings=settings)
-            async for evt in client.transcribe_pcm_stream(
-                _pcm_iter(),
-                norm_lang,
-                vad_mode,
-                keyterms=parsed_keyterms,
-            ):
-                await websocket.send_json(
-                    {
-                        "type": "transcript",
-                        "text": evt.text,
-                        "detected_language_code": evt.detected_language_code,
-                        "segment_index": evt.segment_index,
-                        "latency_ms": evt.latency_ms,
-                    }
-                )
+            transcript_count = 0
+            try:
+                async for evt in client.transcribe_pcm_stream(
+                    _pcm_iter(),
+                    norm_lang,
+                    vad_mode,
+                    keyterms=parsed_keyterms,
+                ):
+                    await websocket.send_json(
+                        {
+                            "type": "transcript",
+                            "text": evt.text,
+                            "detected_language_code": evt.detected_language_code,
+                            "segment_index": evt.segment_index,
+                            "latency_ms": evt.latency_ms,
+                        }
+                    )
+                    transcript_count += 1
+            except VoiceError as err:
+                # Upstream STT can close or time out after delivering usable transcript(s);
+                # finish draining browser audio so saved WAV + audio_saved still complete cleanly.
+                if transcript_count == 0 or err.code not in (
+                    ErrorCode.STT_CONNECTION_LOST,
+                    ErrorCode.STT_TIMEOUT,
+                ):
+                    raise
+            finally:
+                upstream_done = True
 
         await reader_task
         if client_ended or recorded_pcm:

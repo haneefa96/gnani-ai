@@ -293,3 +293,152 @@ async def test_stt_client_send_timeout_maps_to_stt_timeout(tmp_path: Path) -> No
     finally:
         server.close()
         await server.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_ws_stt_proxy_settles_when_gnani_stays_open_after_transcript(tmp_path: Path) -> None:
+    """Persistent STT WS stays open after final transcript; proxy must still emit audio_saved."""
+    received_frames = 0
+
+    async def persistent_gnani_handler(ws: Any) -> None:
+        nonlocal received_frames
+        async for msg in ws:
+            if isinstance(msg, bytes):
+                received_frames += 1
+                if received_frames == 2:
+                    await ws.send(
+                        json.dumps(
+                            {
+                                "transcript": "Shamaz agreed 10000 rupees",
+                                "detected_language_code": "en-IN",
+                                "segment_index": 1,
+                            }
+                        )
+                    )
+                    # Intentionally keep the WS open while trailing silence arrives,
+                    # mirroring Gnani's persistent streaming STT server.
+
+    server = await websockets.serve(persistent_gnani_handler, "127.0.0.1", 0)
+    port = server.sockets[0].getsockname()[1]
+    try:
+        app = FastAPI()
+        app.include_router(router)
+        settings = _make_settings(tmp_path, wss_url=f"ws://127.0.0.1:{port}")
+        store = LocalAudioStore(base_dir=tmp_path / "audio")
+        app.dependency_overrides[get_voice_settings] = lambda: settings
+        app.dependency_overrides[get_audio_store] = lambda: store
+
+        import backend.voice.router as voice_router_mod
+
+        orig_cls = voice_router_mod.GnaniSttClient
+        voice_router_mod.GnaniSttClient = lambda settings: orig_cls(  # type: ignore[misc, assignment]
+            settings=settings,
+            frame_interval_s=0.001,
+            trailing_silence_frames=1,
+            post_end_flush_s=0.05,
+        )
+        try:
+            def _run_client() -> list[dict[str, Any]]:
+                with TestClient(app) as tc:
+                    with tc.websocket_connect("/ws/stt?lang=en-IN&mode=narration&kind=narration") as ws:
+                        assert ws.receive_json() == {"type": "processing"}
+                        frame = b"\x02\x00" * 512
+                        ws.send_bytes(frame)
+                        ws.send_bytes(frame)
+                        ws.send_text(json.dumps({"type": "end"}))
+                        collected: list[dict[str, Any]] = []
+                        while True:
+                            try:
+                                collected.append(ws.receive_json())
+                            except Exception:
+                                break
+                        return collected
+
+            events = await asyncio.wait_for(asyncio.to_thread(_run_client), timeout=3.0)
+            assert [e["text"] for e in events if e.get("type") == "transcript"] == [
+                "Shamaz agreed 10000 rupees"
+            ]
+            assert [e for e in events if e.get("type") == "error"] == []
+            saved = [e for e in events if e.get("type") == "audio_saved"]
+            assert len(saved) == 1
+            assert saved[0]["audio_ref"].startswith("local://narration/")
+        finally:
+            voice_router_mod.GnaniSttClient = orig_cls
+    finally:
+        server.close()
+        await server.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_ws_stt_proxy_saves_audio_when_upstream_closes_uncleanly_after_transcript(
+    tmp_path: Path,
+) -> None:
+    """If upstream STT drops unexpectedly after delivering a transcript, audio_saved still emits."""
+    received_frames = 0
+
+    async def abrupt_gnani_handler(ws: Any) -> None:
+        nonlocal received_frames
+        async for msg in ws:
+            if isinstance(msg, bytes):
+                received_frames += 1
+                if received_frames == 2:
+                    await ws.send(
+                        json.dumps(
+                            {
+                                "transcript": "Paid 10 rupees",
+                                "detected_language_code": "en-IN",
+                                "segment_index": 1,
+                            }
+                        )
+                    )
+                    await ws.close(code=1011, reason="upstream idle drop")
+                    break
+
+    server = await websockets.serve(abrupt_gnani_handler, "127.0.0.1", 0)
+    port = server.sockets[0].getsockname()[1]
+    try:
+        app = FastAPI()
+        app.include_router(router)
+        settings = _make_settings(tmp_path, wss_url=f"ws://127.0.0.1:{port}")
+        store = LocalAudioStore(base_dir=tmp_path / "audio")
+        app.dependency_overrides[get_voice_settings] = lambda: settings
+        app.dependency_overrides[get_audio_store] = lambda: store
+
+        import backend.voice.router as voice_router_mod
+
+        orig_cls = voice_router_mod.GnaniSttClient
+        voice_router_mod.GnaniSttClient = lambda settings: orig_cls(  # type: ignore[misc, assignment]
+            settings=settings,
+            frame_interval_s=0.001,
+            trailing_silence_frames=1,
+            post_end_flush_s=0.05,
+        )
+        try:
+            def _run_client() -> list[dict[str, Any]]:
+                with TestClient(app) as tc:
+                    with tc.websocket_connect("/ws/stt?lang=en-IN&mode=narration&kind=narration") as ws:
+                        assert ws.receive_json() == {"type": "processing"}
+                        frame = b"\x02\x00" * 512
+                        ws.send_bytes(frame)
+                        ws.send_bytes(frame)
+                        ws.send_text(json.dumps({"type": "end"}))
+                        collected: list[dict[str, Any]] = []
+                        while True:
+                            try:
+                                collected.append(ws.receive_json())
+                            except Exception:
+                                break
+                        return collected
+
+            events = await asyncio.wait_for(asyncio.to_thread(_run_client), timeout=3.0)
+            assert [e["text"] for e in events if e.get("type") == "transcript"] == [
+                "Paid 10 rupees"
+            ]
+            assert [e for e in events if e.get("type") == "error"] == []
+            saved = [e for e in events if e.get("type") == "audio_saved"]
+            assert len(saved) == 1
+        finally:
+            voice_router_mod.GnaniSttClient = orig_cls
+    finally:
+        server.close()
+        await server.wait_closed()

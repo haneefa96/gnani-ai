@@ -46,6 +46,12 @@ function App() {
       window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
   }, []);
 
+  useEffect(() => {
+    if (worker?.language && i18n.language !== worker.language) {
+      void i18n.changeLanguage(worker.language);
+    }
+  }, [worker?.language]);
+
   const handleLogin = (response: AuthResponse, profile: WorkerProfile) => {
     storeAuthSession(response.access_token, profile);
     setWorker(profile);

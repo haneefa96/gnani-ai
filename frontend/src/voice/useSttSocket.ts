@@ -12,7 +12,7 @@ import {
 } from "./types";
 
 const FRAME_PACING_MS = 32;
-const FINALIZE_TIMEOUT_MS = 10_000;
+const FINALIZE_TIMEOUT_MS = 15_000;
 
 function resolveWsUrl(options: UseSttSocketOptions): string {
   const params = new URLSearchParams({
@@ -62,6 +62,7 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
   const pacerTimerRef = useRef<number | null>(null);
   const stoppingRef = useRef(false);
   const audioSavedRef = useRef(false);
+  const serverErrorRef = useRef(false);
   const reconnectAttemptsRef = useRef(0);
   const endResolveRef = useRef<(() => void) | null>(null);
 
@@ -115,6 +116,7 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
 
   const openWebSocket = useCallback((): Promise<void> => {
     return new Promise((resolve, reject) => {
+      serverErrorRef.current = false;
       const url = resolveWsUrl(optionsRef.current);
       const ws = new WebSocket(url);
       ws.binaryType = "arraybuffer";
@@ -168,6 +170,7 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
           endResolveRef.current?.();
           endResolveRef.current = null;
         } else if (msg.type === "error") {
+          serverErrorRef.current = true;
           emitError(msg.code, msg.message);
           endResolveRef.current?.();
           endResolveRef.current = null;
@@ -192,7 +195,7 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
         }
 
         if (stoppingRef.current) {
-          if (ev.code !== 1000 && !audioSavedRef.current) {
+          if (ev.code !== 1000 && !audioSavedRef.current && !serverErrorRef.current) {
             emitError("STT_CONNECTION_LOST", "Voice connection dropped before saving audio.");
           } else {
             setStatus((prev) => (prev === "error" ? "error" : "idle"));
@@ -352,6 +355,7 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
       await new Promise<void>((resolve) => {
         const timeoutId = window.setTimeout(() => {
           endResolveRef.current = null;
+          serverErrorRef.current = true;
           emitError("STT_TIMEOUT", "Timed out waiting for speech transcription.");
           try {
             ws.close();
@@ -375,6 +379,7 @@ export function useSttSocket(options: UseSttSocketOptions): UseSttSocketReturn {
   const reset = useCallback(() => {
     stoppingRef.current = true;
     audioSavedRef.current = false;
+    serverErrorRef.current = false;
     cleanupMedia();
     if (wsRef.current) {
       try {
