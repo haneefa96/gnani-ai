@@ -11,7 +11,15 @@ export interface AuthResponse {
   access_token: string;
   token_type: "bearer";
   worker_id: number;
+  language?: string;
 }
+
+export const SUPPORTED_LANGUAGE_OPTIONS = [
+  { code: "hi-IN", name: "Hindi" },
+  { code: "kn-IN", name: "Kannada" },
+  { code: "bn-IN", name: "Bengali" },
+  { code: "en-IN", name: "English" },
+] as const;
 
 export interface WorkerProfile {
   alias: string;
@@ -141,6 +149,15 @@ export async function changeWorkerPin(
     current_pin: currentPin,
     new_pin: newPin,
   });
+}
+
+export async function updateWorkerLanguage(
+  language: string,
+): Promise<{ language: string }> {
+  const response = await api.patch<{ language: string }>("/auth/language", {
+    language,
+  });
+  return response.data;
 }
 
 export async function getEntries(): Promise<WageEntry[]> {

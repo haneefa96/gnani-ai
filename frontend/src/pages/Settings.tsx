@@ -2,16 +2,24 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
-import { changeWorkerPin, getApiErrorMessage, type WorkerProfile } from '../api'
+import {
+  changeWorkerPin,
+  getApiErrorMessage,
+  SUPPORTED_LANGUAGE_OPTIONS,
+  updateWorkerLanguage,
+  type WorkerProfile,
+} from '../api'
 
 export default function Settings({
   worker,
   onLogout,
+  onLanguageChange,
 }: {
   worker: WorkerProfile
   onLogout: () => void
+  onLanguageChange?: (language: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [pin, setPin] = useState('')
   const [newPin, setNewPin] = useState('')
@@ -19,6 +27,8 @@ export default function Settings({
   const [pinError, setPinError] = useState('')
   const [pinSuccess, setPinSuccess] = useState('')
   const [changingPin, setChangingPin] = useState(false)
+  const [changingLanguage, setChangingLanguage] = useState(false)
+  const [languageError, setLanguageError] = useState('')
 
   const handlePinChange = async () => {
     setPinError('')
@@ -49,6 +59,22 @@ export default function Settings({
   const handleDeleteAccount = () => {
     if (confirm(t('settings:deleteAccountConfirm'))) {
       onLogout()
+    }
+  }
+
+  const handleLanguageSelect = async (code: string) => {
+    if (changingLanguage || code === worker.language) return
+    setLanguageError('')
+    setChangingLanguage(true)
+    try {
+      const res = await updateWorkerLanguage(code)
+      const nextLanguage = res.language || code
+      await i18n.changeLanguage(nextLanguage)
+      onLanguageChange?.(nextLanguage)
+    } catch (requestError) {
+      setLanguageError(getApiErrorMessage(requestError, t('common:retry')))
+    } finally {
+      setChangingLanguage(false)
     }
   }
 
@@ -176,13 +202,33 @@ export default function Settings({
         {/* Language preference */}
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="font-semibold mb-4">{t('settings:language')}</h2>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <p className="text-sm text-gray-600">
               {t('settings:languageDescription')}
             </p>
             <p className="text-sm font-medium">
               {t('settings:currentLanguage', { lang: worker.language })}
             </p>
+            {languageError && (
+              <p role="alert" className="text-sm text-red-700">{languageError}</p>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              {SUPPORTED_LANGUAGE_OPTIONS.map((lang) => (
+                <button
+                  key={lang.code}
+                  type="button"
+                  disabled={changingLanguage}
+                  onClick={() => void handleLanguageSelect(lang.code)}
+                  className={`p-3 rounded-lg transition text-sm font-medium ${
+                    worker.language === lang.code
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  }`}
+                >
+                  {lang.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -13,12 +13,9 @@
     "enterAlias": "ನಿಮ್ಮ ಅಲಿಯಾಸ್ ನಮೂದಿಸಿ",
     "pin": "PIN",
     "register": "ನೋಂದಾಯಿಸಿ",
-    "donthaveAccount": "�ಾತೆ ಇಲ್ಲವೇ?",
+    "donthaveAccount": "ಖಾತೆ ಇಲ್ಲವೇ?",
     "welcomeBack": "ಸ್ವಾಗತ",
-    "login": "ಲಾಗಿನ್",
-    "authFailed": "ದೃಢೀಕರಣ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-    "aliasTooShort": "ಅಲಿಯಾಸ್ ಕನಿಷ್ಠ 3 ಅಕ್ಷರಗಳಿರಬೇಕು.",
-    "haveAccount": "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?"
+    "login": "ಲಾಗಿನ್"
   },
   "onboarding": {
     "welcome": "ಸಾಕ್ಷಿಗೆ ಸ್ವಾಗತ",
@@ -29,12 +26,16 @@
     "pinMustBe4Digits": "PIN 4 ಅಂಕಿಗಳಾಗಿರಬೇಕು",
     "pinsDoNotMatch": "PINಗಳು ಹೊಂದಿಕೊಳ್ಳುತ್ತಿಲ್ಲ",
     "emptyFields": "ದಯವಿಟ್ಟು ಎಲ್ಲಾ ಕ್ಷೇತ್ರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ",
+    "alias": "ಅಲಿಯಾಸ್",
     "enterAlias": "ನಿಮ್ಮ ಅಲಿಯಾಸ್ ನಮೂದಿಸಿ",
     "pin": "PIN",
     "register": "ನೋಂದಾಯಿಸಿ",
     "donthaveAccount": "ಖಾತೆ ಇಲ್ಲವೇ?",
     "welcomeBack": "ಸ್ವಾಗತ",
-    "login": "ಲಾಗಿನ್"
+    "login": "ಲಾಗಿನ್",
+    "authFailed": "ದೃಢೀಕರಣ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "aliasTooShort": "ಅಲಿಯಾಸ್ ಕನಿಷ್ಠ 3 ಅಕ್ಷರಗಳಿರಬೇಕು.",
+    "haveAccount": "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?"
   },
   "export": {
     "title": "ಸಾಕ್ಷ್ಯ ಪ್ಯಾಕ್ ರಚಿಸಿ",

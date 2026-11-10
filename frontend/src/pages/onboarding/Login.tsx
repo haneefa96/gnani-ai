@@ -41,7 +41,10 @@ export default function Login({
     setLoading(true)
     try {
       const response = await loginWorker(normalizedAlias, pin)
-      onLogin(response, { alias: normalizedAlias, language: 'hi-IN' })
+      onLogin(response, {
+        alias: normalizedAlias,
+        language: response.language || 'hi-IN',
+      })
       navigate('/home', { replace: true })
     } catch (loginError) {
       setError(getApiErrorMessage(loginError, t('onboarding:authFailed')))

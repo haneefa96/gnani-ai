@@ -25,6 +25,7 @@
     "pinMustBe4Digits": "PIN must be 4 digits",
     "pinsDoNotMatch": "PINs do not match",
     "emptyFields": "Please fill in all fields",
+    "alias": "Alias",
     "enterAlias": "Enter your alias",
     "pin": "PIN",
     "register": "Register",

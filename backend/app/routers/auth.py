@@ -10,7 +10,7 @@ from math import ceil
 import re
 from threading import Lock
 from time import monotonic
-from typing import Optional
+from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, SecretStr, field_validator
 from passlib.hash import bcrypt
@@ -127,10 +127,15 @@ class ChangePinRequest(BaseModel):
         return pin
 
 
+class LanguageUpdateRequest(BaseModel):
+    language: Literal["hi-IN", "kn-IN", "bn-IN", "en-IN"]
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     worker_id: int
+    language: str = "hi-IN"
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -197,7 +202,8 @@ async def register_worker(
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        worker_id=worker.id
+        worker_id=worker.id,
+        language=worker.language,
     )
 
 
@@ -225,7 +231,8 @@ async def login_worker(
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        worker_id=worker.id
+        worker_id=worker.id,
+        language=worker.language,
     )
 
 
@@ -270,3 +277,21 @@ async def change_worker_pin(
     worker.pin_hash = bcrypt.hash(pin_data.new_pin.get_secret_value())
     db.commit()
     return {"status": "updated"}
+
+
+@router.patch("/language")
+async def update_worker_language(
+    payload: LanguageUpdateRequest,
+    worker_id: CurrentWorker,
+    db = Depends(get_db),
+) -> dict[str, str]:
+    """Update the authenticated worker's preferred UI/voice language."""
+    worker = db.query(Worker).filter(Worker.id == worker_id).first()
+    if worker is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Worker not found",
+        )
+    worker.language = payload.language
+    db.commit()
+    return {"language": worker.language}

@@ -5,26 +5,25 @@ import { Button } from '../../components/Button'
 import {
   getApiErrorMessage,
   registerWorker,
+  SUPPORTED_LANGUAGE_OPTIONS,
   type AuthResponse,
   type WorkerProfile,
 } from '../../api'
-
-const languages = [
-  { code: 'hi-IN', name: 'Hindi' },
-  { code: 'kn-IN', name: 'Kannada' },
-  { code: 'bn-IN', name: 'Bengali' },
-  { code: 'en-IN', name: 'English' },
-]
 
 export default function Onboarding({
   onLogin,
 }: {
   onLogin: (response: AuthResponse, profile: WorkerProfile) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [alias, setAlias] = useState('')
-  const [selectedLanguage, setSelectedLanguage] = useState('hi-IN')
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    const active = i18n.resolvedLanguage || i18n.language
+    return SUPPORTED_LANGUAGE_OPTIONS.some((lang) => lang.code === active)
+      ? active
+      : 'hi-IN'
+  })
   const [pin, setPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
   const [step, setStep] = useState(1)
@@ -33,6 +32,7 @@ export default function Onboarding({
 
   const handleLanguageChange = (code: string) => {
     setSelectedLanguage(code)
+    void i18n.changeLanguage(code)
   }
 
   const handlePinSetup = async () => {
@@ -96,9 +96,10 @@ export default function Onboarding({
             </div>
             <p className="mb-6">{t('onboarding:chooseLanguage')}</p>
             <div className="space-y-2">
-              {languages.map((lang) => (
+              {SUPPORTED_LANGUAGE_OPTIONS.map((lang) => (
                 <button
                   key={lang.code}
+                  type="button"
                   onClick={() => handleLanguageChange(lang.code)}
                   className={`w-full p-3 rounded-lg transition ${
                     selectedLanguage === lang.code

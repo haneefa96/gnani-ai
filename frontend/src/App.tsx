@@ -5,6 +5,7 @@ import i18n from "./i18n";
 import {
   AUTH_EXPIRED_EVENT,
   clearAuthSession,
+  getAccessToken,
   restoreAuthSession,
   storeAuthSession,
   type AuthResponse,
@@ -64,6 +65,19 @@ function App() {
     setAuthenticated(false);
   };
 
+  const handleLanguageChange = (language: string) => {
+    if (!worker) return;
+    const updatedProfile = { ...worker, language };
+    const token = getAccessToken();
+    if (token) {
+      storeAuthSession(token, updatedProfile);
+    }
+    setWorker(updatedProfile);
+    if (i18n.language !== language) {
+      void i18n.changeLanguage(language);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -102,7 +116,13 @@ function App() {
             <Route
               path="/settings"
               element={
-                worker && <Settings worker={worker} onLogout={handleLogout} />
+                worker && (
+                  <Settings
+                    worker={worker}
+                    onLogout={handleLogout}
+                    onLanguageChange={handleLanguageChange}
+                  />
+                )
               }
             />
             <Route path="/export" element={<ExportScreen />} />

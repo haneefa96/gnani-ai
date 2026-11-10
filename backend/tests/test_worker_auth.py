@@ -417,3 +417,52 @@ def test_contractor_token_access_and_all_response_results(
         confirmation = db.query(Confirmation).one()
         assert confirmation.result == result
         assert confirmation.reason_text == reason
+
+
+def test_worker_login_returns_saved_language_and_patch_language_updates_it(
+    api_client: tuple[TestClient, sessionmaker],
+):
+    client, test_session = api_client
+    reg = client.post(
+        "/api/auth/register",
+        json={"alias": "lang-worker", "pin": "1234", "language": "en-IN"},
+    )
+    assert reg.status_code == 201
+    assert reg.json()["language"] == "en-IN"
+    token = reg.json()["access_token"]
+
+    login_res = client.post(
+        "/api/auth/login",
+        json={"alias": "lang-worker", "pin": "1234"},
+    )
+    assert login_res.status_code == 200
+    assert login_res.json()["language"] == "en-IN"
+
+    assert client.patch("/api/auth/language", json={"language": "kn-IN"}).status_code == 401
+    assert (
+        client.patch(
+            "/api/auth/language",
+            headers=auth_header(token),
+            json={"language": "fr-FR"},
+        ).status_code
+        == 422
+    )
+
+    updated = client.patch(
+        "/api/auth/language",
+        headers=auth_header(token),
+        json={"language": "kn-IN"},
+    )
+    assert updated.status_code == 200
+    assert updated.json() == {"language": "kn-IN"}
+
+    relogin = client.post(
+        "/api/auth/login",
+        json={"alias": "lang-worker", "pin": "1234"},
+    )
+    assert relogin.status_code == 200
+    assert relogin.json()["language"] == "kn-IN"
+
+    with test_session() as db:
+        worker = db.query(Worker).filter(Worker.alias == "lang-worker").one()
+        assert worker.language == "kn-IN"
