@@ -7,21 +7,45 @@ from __future__ import annotations
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Annotated, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from contracts.voice_interface import VoiceService
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from backend.app.config import Settings
-from backend.app.models import Entry, Worker, Counterparty, EntryStatusLog, EntryStatus, ShareToken
-from backend.app.db import get_async_session
-from contracts.voice_interface import VoiceService
-from backend.app.services.hashchain import HashChainService
+from app.config import Settings
+from app.models import Entry, Worker, Counterparty, EntryStatusLog, ShareToken
+from app.db import SessionLocal
+from app.services.hashchain import HashChainService
 
 settings = Settings()
 router = APIRouter()
+
+
+def get_db():
+    """Get database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def get_current_worker(auth_token: dict = Depends(lambda: {'worker_id': 1})):
+    """Get current worker ID (placeholder - should be replaced with proper JWT dependency)"""
+    return 1
+
+
+def get_hashchain_service() -> HashChainService:
+    """Get hash chain service instance"""
+    return HashChainService()
+
+
+# Dependency types
+CurrentWorker = Annotated[int, Depends(get_current_worker)]
+HashChainServiceDep = Annotated[HashChainService, Depends(get_hashchain_service)]
 
 
 # Pydantic models
@@ -72,19 +96,12 @@ class EntryDraft(BaseModel):
 async def create_entry_draft(
     entry_data: EntryCreate,
     current_worker_id: CurrentWorker,
-    voice_service: VoiceServiceDep,
     hashchain_service: HashChainServiceDep,
-    db: DBSession,
+    db = Depends(get_db)
 ) -> EntryResponse:
     """Create a new entry draft."""
     # Get the last entry to compute prev_hash
-    result = await db.execute(
-        select(Entry)
-        .where(Entry.worker_id == current_worker_id)
-        .order_by(Entry.created_at.desc())
-        .limit(1)
-    )
-    last_entry = result.scalar_one_or_none()
+    last_entry = db.query(Entry).filter(Entry.worker_id == current_worker_id).order_by(Entry.created_at.desc()).first()
     
     prev_hash = hashchain_service.GENESIS_HASH
     if last_entry:
@@ -118,8 +135,8 @@ async def create_entry_draft(
     )
     
     db.add(entry)
-    await db.commit()
-    await db.refresh(entry)
+    db.commit()
+    db.refresh(entry)
     
     return EntryResponse(
         id=entry.id,
@@ -141,15 +158,10 @@ async def create_entry_draft(
 @router.get("/", response_model=List[EntryResponse])
 async def get_entries(
     current_worker_id: CurrentWorker,
-    db: DBSession,
+    db = Depends(get_db)
 ) -> List[EntryResponse]:
     """Get all entries for the current worker."""
-    result = await db.execute(
-        select(Entry)
-        .where(Entry.worker_id == current_worker_id)
-        .order_by(Entry.created_at.desc())
-    )
-    entries = result.scalars().all()
+    entries = db.query(Entry).filter(Entry.worker_id == current_worker_id).order_by(Entry.created_at.desc()).all()
     
     return [
         EntryResponse(
@@ -175,16 +187,10 @@ async def get_entries(
 async def get_entry(
     entry_id: int,
     current_worker_id: CurrentWorker,
-    db: DBSession,
+    db = Depends(get_db)
 ) -> EntryResponse:
     """Get a single entry by ID."""
-    result = await db.execute(
-        select(Entry).where(
-            Entry.id == entry_id,
-            Entry.worker_id == current_worker_id
-        )
-    )
-    entry = result.scalar_one_or_none()
+    entry = db.query(Entry).filter(Entry.id == entry_id, Entry.worker_id == current_worker_id).first()
     
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -211,17 +217,11 @@ async def confirm_entry(
     entry_id: int,
     current_worker_id: CurrentWorker,
     hashchain_service: HashChainServiceDep,
-    db: DBSession,
+    db = Depends(get_db)
 ) -> EntryResponse:
     """Confirm entry with worker's spoken yes."""
     # Get entry
-    result = await db.execute(
-        select(Entry).where(
-            Entry.id == entry_id,
-            Entry.worker_id == current_worker_id
-        )
-    )
-    entry = result.scalar_one_or_none()
+    entry = db.query(Entry).filter(Entry.id == entry_id, Entry.worker_id == current_worker_id).first()
     
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -262,8 +262,8 @@ async def confirm_entry(
     # Update entry status
     entry.status = Entry.STATUS_WORKER_CONFIRMED
     
-    await db.commit()
-    await db.refresh(entry)
+    db.commit()
+    db.refresh(entry)
     
     return EntryResponse(
         id=entry.id,
@@ -288,17 +288,11 @@ async def create_correction(
     correction_data: EntryCorrect,
     current_worker_id: CurrentWorker,
     hashchain_service: HashChainServiceDep,
-    db: DBSession,
+    db = Depends(get_db)
 ) -> EntryResponse:
     """Create a correcting entry."""
     # Get original entry
-    result = await db.execute(
-        select(Entry).where(
-            Entry.id == entry_id,
-            Entry.worker_id == current_worker_id
-        )
-    )
-    original_entry = result.scalar_one_or_none()
+    original_entry = db.query(Entry).filter(Entry.id == entry_id, Entry.worker_id == current_worker_id).first()
     
     if not original_entry:
         raise HTTPException(status_code=404, detail="Original entry not found")
@@ -327,8 +321,8 @@ async def create_correction(
     )
     
     db.add(new_entry)
-    await db.commit()
-    await db.refresh(new_entry)
+    db.commit()
+    db.refresh(new_entry)
     
     return EntryResponse(
         id=new_entry.id,
@@ -351,17 +345,11 @@ async def create_correction(
 async def share_entry(
     entry_id: int,
     current_worker_id: CurrentWorker,
-    db: DBSession,
+    db = Depends(get_db)
 ) -> dict:
     """Create share token for contractor."""
     # Get entry
-    result = await db.execute(
-        select(Entry).where(
-            Entry.id == entry_id,
-            Entry.worker_id == current_worker_id
-        )
-    )
-    entry = result.scalar_one_or_none()
+    entry = db.query(Entry).filter(Entry.id == entry_id, Entry.worker_id == current_worker_id).first()
     
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -383,7 +371,7 @@ async def share_entry(
     )
     
     db.add(share_token)
-    await db.commit()
+    db.commit()
     
     # Build share URL
     share_url = f"http://localhost:5173/c/{token}"

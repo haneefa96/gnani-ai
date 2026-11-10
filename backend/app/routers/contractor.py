@@ -7,17 +7,27 @@ from __future__ import annotations
 import hashlib
 import secrets
 from datetime import datetime, timedelta
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from backend.app.config import Settings
-from backend.app.models import Entry, ShareToken, Confirmation, EntryStatus
-from backend.app.db import get_async_session
+from app.config import Settings
+from app.models import Entry, ShareToken, Confirmation
+from app.db import SessionLocal
 
 settings = Settings()
 router = APIRouter()
+
+
+def get_db():
+    """Get database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 class ContractorResponse(BaseModel):
@@ -27,21 +37,16 @@ class ContractorResponse(BaseModel):
 
 
 @router.get("/{token}", response_model=dict)
-async def get_contractor_entry(token: str, db: AsyncSession = Depends(get_async_session)) -> dict:
+async def get_contractor_entry(token: str, db = Depends(get_db)) -> dict:
     """Get contractor entry data."""
     # Hash the token to find it
     token_hash = hashlib.sha256(token.encode()).hexdigest()
     
-    result = await db.execute(
-        select(ShareToken)
-        .where(
-            ShareToken.token_hash == token_hash,
-            ShareToken.used_at.is_(None),
-            ShareToken.expires_at > datetime.utcnow()
-        )
-        .options(selectinload(ShareToken.entry))
-    )
-    share_token = result.scalar_one_or_none()
+    share_token = db.query(ShareToken).filter(
+        ShareToken.token_hash == token_hash,
+        ShareToken.used_at.is_(None),
+        ShareToken.expires_at > datetime.utcnow()
+    ).first()
     
     if not share_token:
         raise HTTPException(status_code=404, detail="Invalid or expired token")
@@ -59,22 +64,17 @@ async def get_contractor_entry(token: str, db: AsyncSession = Depends(get_async_
 async def contractor_respond(
     token: str,
     response_data: ContractorResponse,
-    db: AsyncSession = Depends(get_async_session)
+    db = Depends(get_db)
 ) -> dict:
     """Contractor response to entry."""
     # Hash the token to find it
     token_hash = hashlib.sha256(token.encode()).hexdigest()
     
-    result = await db.execute(
-        select(ShareToken)
-        .where(
-            ShareToken.token_hash == token_hash,
-            ShareToken.used_at.is_(None),
-            ShareToken.expires_at > datetime.utcnow()
-        )
-        .options(selectinload(ShareToken.entry))
-    )
-    share_token = result.scalar_one_or_none()
+    share_token = db.query(ShareToken).filter(
+        ShareToken.token_hash == token_hash,
+        ShareToken.used_at.is_(None),
+        ShareToken.expires_at > datetime.utcnow()
+    ).first()
     
     if not share_token:
         raise HTTPException(status_code=404, detail="Invalid or expired token")
@@ -106,6 +106,6 @@ async def contractor_respond(
         # "no" - still counts as shared but not confirmed
         entry.status = Entry.STATUS_UNCONFIRMED
     
-    await db.commit()
+    db.commit()
     
     return {"status": entry.status}

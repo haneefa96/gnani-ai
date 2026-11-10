@@ -10,16 +10,25 @@ import zipfile
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
-from backend.app.config import Settings
-from backend.app.models import EvidencePack, Entry
-from backend.app.db import get_async_session
-from backend.app.services.storage import StorageService
-from backend.app.services.pdf import EvidencePDFService
+from app.config import Settings
+from app.models import EvidencePack, Entry, Worker
+from app.db import SessionLocal
+from app.services.hashchain import HashChainService
+from app.services.pdf import EvidencePDFService
 
 settings = Settings()
 router = APIRouter()
+
+
+def get_db():
+    """Get database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 class EvidencePackRequest(BaseModel):
@@ -37,18 +46,15 @@ class EvidencePackResponse(BaseModel):
 @router.post("/evidence", response_model=EvidencePackResponse)
 async def build_evidence_pack(
     request: EvidencePackRequest,
-    db: AsyncSession = Depends(get_async_session)
+    db = Depends(get_db)
 ) -> EvidencePackResponse:
     """Build evidence pack."""
     # Get entries for the worker within the period
-    result = await db.execute(
-        select(Entry).where(
-            Entry.worker_id == request.worker_id,
-            Entry.work_date >= request.period_from,
-            Entry.work_date <= request.period_to,
-        ).order_by(Entry.created_at)
-    )
-    entries = result.scalars().all()
+    entries = db.query(Entry).filter(
+        Entry.worker_id == request.worker_id,
+        Entry.work_date >= request.period_from,
+        Entry.work_date <= request.period_to,
+    ).order_by(Entry.created_at).all()
     
     if not entries:
         raise HTTPException(status_code=404, detail="No entries found for the specified period")
@@ -59,9 +65,7 @@ async def build_evidence_pack(
     os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
     
     # Get worker alias for the PDF
-    from backend.app.models import Worker
-    worker_result = await db.execute(select(Worker).where(Worker.id == request.worker_id))
-    worker = worker_result.scalar_one_or_none()
+    worker = db.query(Worker).filter(Worker.id == request.worker_id).first()
     
     # Convert entries to dict for PDF
     entry_data = [
@@ -109,7 +113,7 @@ async def build_evidence_pack(
                 zf.write(e.audio_uri, os.path.basename(e.audio_uri))
     
     # Get chain head hash
-    from backend.app.services.hashchain import HashChainService
+    from app.services.hashchain import HashChainService
     hashchain = HashChainService()
     chain_head_hash = hashchain.get_chain_head(entries)
     
@@ -124,7 +128,7 @@ async def build_evidence_pack(
         created_at=datetime.utcnow(),
     )
     db.add(evidence_pack)
-    await db.commit()
+    db.commit()
     
     return EvidencePackResponse(
         pdf_uri=pdf_path,
@@ -135,18 +139,17 @@ async def build_evidence_pack(
 
 @router.get("/verify", response_model=dict)
 async def verify_chain(
-    db: AsyncSession = Depends(get_async_session)
+    db = Depends(get_db)
 ) -> dict:
     """Verify hash chain integrity."""
     # Get all entries
-    result = await db.execute(select(Entry).order_by(Entry.created_at))
-    entries = result.scalars().all()
+    entries = db.query(Entry).order_by(Entry.created_at).all()
     
     if not entries:
         return {"valid": True, "mismatch_reason": None, "message": "No entries to verify"}
     
     # Verify chain
-    from backend.app.services.hashchain import HashChainService
+    from app.services.hashchain import HashChainService
     hashchain = HashChainService()
     is_valid, mismatch_reason = hashchain.verify_chain(entries)
     
@@ -154,4 +157,3 @@ async def verify_chain(
         "valid": is_valid,
         "mismatch_reason": mismatch_reason,
     }
-

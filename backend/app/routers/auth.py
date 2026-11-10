@@ -11,11 +11,19 @@ from pydantic import BaseModel, Field
 from passlib.hash import bcrypt
 import jwt
 import secrets
-from sqlalchemy import select
 
-from backend.app.config import Settings
-from backend.app.models import Worker
-from backend.app.db import AsyncSession, get_async_session
+from app.config import Settings
+from app.models import Worker
+from app.db import SessionLocal
+
+
+def get_db():
+    """Get database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 settings = Settings()
 router = APIRouter()
@@ -24,7 +32,7 @@ router = APIRouter()
 # Pydantic models
 class WorkerCreate(BaseModel):
     alias: str = Field(..., min_length=3, max_length=50)
-    pin_hash: str = Field(..., min_length=6)
+    pin: str = Field(..., min_length=4)
     language: str = "hi-IN"
     consent_audio_uri: Optional[str] = None
     consent_text_version: Optional[str] = None
@@ -53,10 +61,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
 
 
-async def verify_pin(alias: str, pin: str, db: AsyncSession) -> Optional[Worker]:
+def verify_pin(alias: str, pin: str, db) -> Optional[Worker]:
     """Verify worker PIN."""
-    result = await db.execute(select(Worker).where(Worker.alias == alias))
-    worker = result.scalar_one_or_none()
+    worker = db.query(Worker).filter(Worker.alias == alias).first()
     if not worker:
         return None
     if not bcrypt.verify(pin, worker.pin_hash):
@@ -67,30 +74,32 @@ async def verify_pin(alias: str, pin: str, db: AsyncSession) -> Optional[Worker]
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register_worker(
     worker_data: WorkerCreate,
-    db: AsyncSession = Depends(get_async_session)
+    db = Depends(get_db)
 ) -> TokenResponse:
     """Register a new worker."""
     # Check if alias already exists
-    result = await db.execute(select(Worker).where(Worker.alias == worker_data.alias))
-    existing = result.scalar_one_or_none()
+    existing = db.query(Worker).filter(Worker.alias == worker_data.alias).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Alias already registered"
         )
     
+    # Hash the PIN before storing
+    pin_hash = bcrypt.hash(worker_data.pin)
+    
     # Create worker with hashed PIN
     worker = Worker(
         alias=worker_data.alias,
-        pin_hash=worker_data.pin_hash,
+        pin_hash=pin_hash,
         language=worker_data.language,
         consent_audio_uri=worker_data.consent_audio_uri,
         consent_text_version=worker_data.consent_text_version,
         consent_at=worker_data.consent_at
     )
     db.add(worker)
-    await db.commit()
-    await db.refresh(worker)
+    db.commit()
+    db.refresh(worker)
     
     # Create access token
     access_token = create_access_token(
@@ -108,10 +117,10 @@ async def register_worker(
 @router.post("/login", response_model=TokenResponse)
 async def login_worker(
     login_data: WorkerLogin,
-    db: AsyncSession = Depends(get_async_session)
+    db = Depends(get_db)
 ) -> TokenResponse:
     """Login a worker."""
-    worker = await verify_pin(login_data.alias, login_data.pin, db)
+    worker = verify_pin(login_data.alias, login_data.pin, db)
     if not worker:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -134,10 +143,10 @@ async def login_worker(
 @router.post("/verify-pin")
 async def verify_worker_pin(
     login_data: WorkerLogin,
-    db: AsyncSession = Depends(get_async_session)
+    db = Depends(get_db)
 ) -> dict:
     """Verify worker PIN (for PIN lock screen)."""
-    worker = await verify_pin(login_data.alias, login_data.pin, db)
+    worker = verify_pin(login_data.alias, login_data.pin, db)
     if not worker:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

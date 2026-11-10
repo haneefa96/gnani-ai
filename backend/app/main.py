@@ -6,13 +6,21 @@ Developer B: Product and Data
 
 import os
 import logging
-from contextlib import asynccontextmanager
+from contextlib import contextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.config import Settings
-from backend.app.routers import auth, entries, contractor, evidence
-from backend.app.db import engine, Base
+import sys
+from pathlib import Path
+
+# Add backend parent directory to path
+backend_dir = Path(__file__).resolve().parent.parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
+from app.config import Settings
+from app.routers import auth, entries, contractor, evidence
+from app.db import engine, SessionLocal, Base
 
 # Configure logging
 logging.basicConfig(
@@ -52,16 +60,15 @@ def create_application() -> FastAPI:
     return application
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+@contextmanager
+def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     logger.info("Starting Saakshi application...")
     
     # Create database tables
     logger.info("Creating database tables...")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    Base.metadata.create_all(bind=engine)
     
     logger.info("Database tables created successfully.")
     

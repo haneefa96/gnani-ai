@@ -8,19 +8,25 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import async_engine_from_config, create_async_engine
-from sqlalchemy.pool import NullPool
-import asyncio
 
 from alembic import context
 
-from backend.app.config import Settings
-from backend.app.models import Base
+# Import backend app models
+import sys
+from pathlib import Path
+
+# Add the app directory to Python path
+app_dir = Path(__file__).resolve().parent.parent
+if str(app_dir) not in sys.path:
+    sys.path.insert(0, str(app_dir))
+
+from config import Settings
+from models import Base
 
 settings = Settings()
 config = context.config
 
-# Set database URL from settings
+# Set database URL from settings (remove +asyncpg if present)
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", ""))
 
 # Setup logging
@@ -46,19 +52,26 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-async def run_migrations_online() -> None:
+def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    connectable = create_async_engine(
-        settings.DATABASE_URL,
-        poolclass=NullPool,
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
     )
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(context.configure, render_as_batch=True)
-        await connection.run_sync(context.run_migrations)
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            render_as_batch=True,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    asyncio.run(run_migrations_online())
+    run_migrations_online()
