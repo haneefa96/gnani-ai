@@ -3,6 +3,7 @@ import { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from 'axios
 import {
   api,
   AUTH_EXPIRED_EVENT,
+  changeWorkerPin,
   clearAuthSession,
   getAccessToken,
   getApiErrorMessage,
@@ -121,6 +122,35 @@ describe('frontend authentication client', () => {
     )
     expect(getAccessToken()).toBeNull()
     expect([...storage.values()].join(' ')).not.toContain('9999')
+  })
+
+  it('submits a PIN change through the authenticated client without persisting PINs', async () => {
+    const validToken = createJwt(Math.floor(Date.now() / 1000) + 60)
+    storeAuthSession(validToken, { alias: 'worker-one', language: 'en-IN' })
+    let requestBody: unknown
+    let authorizationHeader: string | undefined
+    api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
+      requestBody = JSON.parse(config.data as string)
+      const header = config.headers.get('Authorization')
+      authorizationHeader = typeof header === 'string' ? header : undefined
+      return {
+        data: { status: 'updated' },
+        status: 200,
+        statusText: 'OK',
+        headers: new AxiosHeaders(),
+        config,
+      }
+    }
+
+    await expect(changeWorkerPin('1234', '5678')).resolves.toBeUndefined()
+    expect(requestBody).toEqual({ current_pin: '1234', new_pin: '5678' })
+    expect(authorizationHeader).toBe(`Bearer ${validToken}`)
+    expect([...storage.values()].join(' ')).not.toContain('1234')
+    expect([...storage.values()].join(' ')).not.toContain('5678')
+
+    api.defaults.adapter = errorAdapter(403, 'Current PIN verification failed')
+    await expect(changeWorkerPin('9999', '5678')).rejects.toBeInstanceOf(AxiosError)
+    expect(getAccessToken()).toBe(validToken)
   })
 
   it('restores a valid JWT profile and clears expired, malformed and legacy sessions', () => {

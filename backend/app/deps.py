@@ -56,7 +56,11 @@ def get_current_worker(
 
     try:
         token = auth.credentials
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY.get_secret_value(),
+            algorithms=["HS256"],
+        )
         worker_id = payload.get("worker_id")
         if not isinstance(worker_id, int) or isinstance(worker_id, bool) or worker_id < 1:
             raise HTTPException(status_code=401, detail="Invalid token payload")

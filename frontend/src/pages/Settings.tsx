@@ -2,17 +2,48 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
+import { changeWorkerPin, getApiErrorMessage, type WorkerProfile } from '../api'
 
-export default function Settings({ worker, onLogout }: { worker: any; onLogout: () => void }) {
+export default function Settings({
+  worker,
+  onLogout,
+}: {
+  worker: WorkerProfile
+  onLogout: () => void
+}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [pin, setPin] = useState('')
   const [newPin, setNewPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [pinSuccess, setPinSuccess] = useState('')
+  const [changingPin, setChangingPin] = useState(false)
 
-  const handlePinChange = () => {
-    // In real implementation, update PIN via API
-    alert('PIN change feature coming soon!')
+  const handlePinChange = async () => {
+    setPinError('')
+    setPinSuccess('')
+    if (!/^[0-9]{4}$/.test(newPin)) {
+      setPinError(t('settings:pinMustBe4Digits'))
+      return
+    }
+    if (newPin !== confirmPin) {
+      setPinError(t('settings:pinsDoNotMatch'))
+      return
+    }
+
+    setChangingPin(true)
+    try {
+      await changeWorkerPin(pin, newPin)
+      setPin('')
+      setNewPin('')
+      setConfirmPin('')
+      setPinSuccess(t('settings:pinChanged'))
+    } catch (requestError) {
+      setPinError(getApiErrorMessage(requestError, t('settings:pinChangeFailed')))
+    } finally {
+      setChangingPin(false)
+    }
   }
 
   const handleDeleteAccount = () => {
@@ -67,12 +98,15 @@ export default function Settings({ worker, onLogout }: { worker: any; onLogout: 
                 {t('settings:currentPin')}
               </label>
               <input
+                id="current-pin"
                 type="password"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 placeholder={t('settings:enterCurrentPin')}
                 className="w-full p-3 border rounded-lg"
-                maxLength={4}
+                inputMode="numeric"
+                maxLength={72}
+                autoComplete="current-password"
               />
             </div>
             <div>
@@ -80,12 +114,15 @@ export default function Settings({ worker, onLogout }: { worker: any; onLogout: 
                 {t('settings:newPin')}
               </label>
               <input
+                id="new-pin"
                 type="password"
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value)}
                 placeholder={t('settings:enterNewPin')}
                 className="w-full p-3 border rounded-lg"
+                inputMode="numeric"
                 maxLength={4}
+                autoComplete="new-password"
               />
             </div>
             <div>
@@ -93,16 +130,29 @@ export default function Settings({ worker, onLogout }: { worker: any; onLogout: 
                 {t('settings:confirmNewPin')}
               </label>
               <input
+                id="confirm-new-pin"
                 type="password"
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value)}
                 placeholder={t('settings:confirmNewPin')}
                 className="w-full p-3 border rounded-lg"
+                inputMode="numeric"
                 maxLength={4}
+                autoComplete="new-password"
               />
             </div>
-            <Button onClick={handlePinChange} className="w-full">
-              {t('settings:savePin')}
+            {pinError && (
+              <p role="alert" className="text-sm text-red-700">{pinError}</p>
+            )}
+            {pinSuccess && (
+              <p role="status" className="text-sm text-green-700">{pinSuccess}</p>
+            )}
+            <Button
+              onClick={() => void handlePinChange()}
+              disabled={changingPin}
+              className="w-full"
+            >
+              {changingPin ? t('common:loading') : t('settings:savePin')}
             </Button>
           </div>
         </div>

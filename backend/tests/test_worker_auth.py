@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import sys
 import zipfile
 from datetime import datetime, timedelta
@@ -8,18 +9,24 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from passlib.hash import bcrypt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
+os.environ.setdefault("SECRET_KEY", "tests-only-random-secret-key-0123456789abcd")
 
 import main
-from app.models import Base, Confirmation, EvidencePack, ShareToken
+from app.config import Settings
+from app.models import Base, Confirmation, EvidencePack, ShareToken, Worker
 from app.routers import auth, contractor, entries, evidence
 
 
 @pytest.fixture
 def api_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    auth.login_rate_limiter.reset()
+    auth.login_rate_limiter.max_attempts = 5
     database_path = tmp_path / "test.db"
     engine = create_engine(
         f"sqlite:///{database_path}",
@@ -46,6 +53,8 @@ def api_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     finally:
         client.close()
         engine.dispose()
+        auth.login_rate_limiter.reset()
+        auth.login_rate_limiter.max_attempts = 5
 
 
 def register(client: TestClient, alias: str) -> tuple[int, str]:
@@ -105,6 +114,133 @@ def test_protected_entry_and_evidence_routes_reject_missing_invalid_and_expired_
             headers=auth_header(expired_token),
             body=body,
         ).status_code == 401
+
+
+def test_secret_key_must_be_present_and_strong(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, SECRET_KEY="")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, SECRET_KEY="your-secret-key-here")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, SECRET_KEY="a" * 40)
+
+    settings = Settings(
+        _env_file=None,
+        SECRET_KEY="tests-only-random-secret-key-0123456789abcd",
+    )
+    assert len(settings.SECRET_KEY.get_secret_value()) >= 32
+
+
+def test_authenticated_worker_can_change_pin_and_old_pin_stops_working(
+    api_client: tuple[TestClient, sessionmaker],
+):
+    client, test_session = api_client
+    worker_id, token = register(client, "pin-change-worker")
+    headers = auth_header(token)
+    pin_change = {"current_pin": "1234", "new_pin": "5678"}
+
+    assert client.post("/api/auth/change-pin", json=pin_change).status_code == 401
+    assert client.post(
+        "/api/auth/change-pin",
+        headers=auth_header("invalid-token"),
+        json=pin_change,
+    ).status_code == 401
+    expired_token = auth.create_access_token(
+        {"worker_id": worker_id},
+        expires_delta=timedelta(seconds=-1),
+    )
+    assert client.post(
+        "/api/auth/change-pin",
+        headers=auth_header(expired_token),
+        json=pin_change,
+    ).status_code == 401
+    assert client.post(
+        "/api/auth/change-pin",
+        headers=headers,
+        json={"current_pin": "1234", "new_pin": "12a4"},
+    ).status_code == 422
+
+    wrong_pin = client.post(
+        "/api/auth/change-pin",
+        headers=headers,
+        json={"current_pin": "9999", "new_pin": "5678"},
+    )
+    assert wrong_pin.status_code == 403
+    assert wrong_pin.json()["detail"] == "Current PIN verification failed"
+
+    changed = client.post(
+        "/api/auth/change-pin",
+        headers=headers,
+        json=pin_change,
+    )
+    assert changed.status_code == 200
+    assert changed.json() == {"status": "updated"}
+    assert "pin_hash" not in str(changed.json())
+
+    with test_session() as db:
+        worker = db.query(Worker).filter(Worker.id == worker_id).one()
+        assert bcrypt.verify("5678", worker.pin_hash)
+        assert not bcrypt.verify("1234", worker.pin_hash)
+
+    assert client.post(
+        "/api/auth/login",
+        json={"alias": "pin-change-worker", "pin": "5678"},
+    ).status_code == 200
+    assert client.post(
+        "/api/auth/login",
+        json={"alias": "pin-change-worker", "pin": "1234"},
+    ).status_code == 401
+
+
+@pytest.mark.parametrize("endpoint", ["login", "change-pin"])
+def test_login_and_pin_change_attempts_are_rate_limited_temporarily(
+    api_client: tuple[TestClient, sessionmaker],
+    monkeypatch: pytest.MonkeyPatch,
+    endpoint: str,
+):
+    client, _ = api_client
+    _, token = register(client, "rate-limited-worker")
+    headers = auth_header(token)
+    limiter = auth.login_rate_limiter
+    limiter.max_attempts = 2
+    now = [100.0]
+    monkeypatch.setattr(auth, "monotonic", lambda: now[0])
+
+    def attempt():
+        if endpoint == "login":
+            return client.post(
+                "/api/auth/login",
+                json={"alias": "rate-limited-worker", "pin": "9999"},
+            )
+        return client.post(
+            "/api/auth/change-pin",
+            headers=headers,
+            json={"current_pin": "9999", "new_pin": "5678"},
+        )
+
+    expected_failure = 401 if endpoint == "login" else 403
+    assert attempt().status_code == expected_failure
+    assert attempt().status_code == expected_failure
+    limited = attempt()
+    assert limited.status_code == 429
+    assert int(limited.headers["Retry-After"]) > 0
+
+    now[0] += limiter.window_seconds + 1
+    if endpoint == "login":
+        recovered = client.post(
+            "/api/auth/login",
+            json={"alias": "rate-limited-worker", "pin": "1234"},
+        )
+    else:
+        recovered = client.post(
+            "/api/auth/change-pin",
+            headers=headers,
+            json={"current_pin": "1234", "new_pin": "5678"},
+        )
+    assert recovered.status_code == 200
 
 
 def test_worker_ownership_and_legitimate_register_entry_share_evidence_workflow(

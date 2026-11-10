@@ -122,6 +122,16 @@ export async function loginWorker(alias: string, pin: string): Promise<AuthRespo
   return response.data
 }
 
+export async function changeWorkerPin(
+  currentPin: string,
+  newPin: string,
+): Promise<void> {
+  await api.post('/auth/change-pin', {
+    current_pin: currentPin,
+    new_pin: newPin,
+  })
+}
+
 export async function getEntries(): Promise<WageEntry[]> {
   const response = await api.get<WageEntry[]>('/entries/')
   if (!Array.isArray(response.data)) {

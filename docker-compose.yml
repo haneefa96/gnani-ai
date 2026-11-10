@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://saakshi:saakshi@db:5432/saakshi
-      - SECRET_KEY=${SECRET_KEY}
+      - "SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY to a strong random value}"
       - SHARE_TOKEN_EXPIRY_DAYS=3
       - AUDIO_STORAGE_PATH=/app/data/audio
       - VOICE_IMPL=${VOICE_IMPL:-fake}
