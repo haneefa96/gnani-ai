@@ -20,7 +20,7 @@ export default function History() {
     }
     return (
       <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status] || 'bg-gray-100'}`}>
-        {status}
+        {t(`history:statuses.${status}`, { defaultValue: status })}
       </span>
     )
   }
@@ -74,7 +74,7 @@ export default function History() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(t(`history:statuses.${entry.status}`, { defaultValue: entry.status }))}
+                        {getStatusBadge(entry.status)}
                         <span className="text-gray-500 text-sm">
                           {entry.work_date}
                         </span>

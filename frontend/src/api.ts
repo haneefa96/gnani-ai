@@ -33,6 +33,18 @@ export interface WageEntry {
   created_at: string
 }
 
+export interface ContractorEntry {
+  entry_text: string
+  language: string
+  entry_id: number
+}
+
+export type ContractorResult = 'yes' | 'no' | 'dispute'
+
+export interface ContractorResponse {
+  status: string
+}
+
 interface StoredProfile {
   alias?: unknown
   language?: unknown
@@ -118,6 +130,30 @@ export async function getEntries(): Promise<WageEntry[]> {
   return response.data
 }
 
+export async function getContractorEntry(token: string): Promise<ContractorEntry> {
+  const response = await api.get<ContractorEntry>(
+    `/contractor/${encodeURIComponent(token)}`,
+  )
+  return response.data
+}
+
+export async function submitContractorResponse(
+  token: string,
+  result: ContractorResult,
+  reasonText?: string,
+): Promise<ContractorResponse> {
+  const response = await api.post<ContractorResponse>(
+    `/contractor/${encodeURIComponent(token)}/respond`,
+    {
+      result,
+      ...(result === 'dispute' && reasonText?.trim()
+        ? { reason_text: reasonText.trim() }
+        : {}),
+    },
+  )
+  return response.data
+}
+
 export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError<{ detail?: unknown }>(error)) {
     const detail = error.response?.data?.detail
@@ -127,10 +163,24 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
   return fallback
 }
 
+export function getContractorApiErrorMessage(
+  error: unknown,
+  fallback: string,
+  unavailableFallback = fallback,
+): string {
+  if (axios.isAxiosError(error) && error.response?.status === 404) {
+    return unavailableFallback
+  }
+  return getApiErrorMessage(error, fallback)
+}
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getAccessToken()
+  const isContractorRequest = config.url?.startsWith('/contractor/') ?? false
+  const token = isContractorRequest ? null : getAccessToken()
   if (token) {
     config.headers.set('Authorization', `Bearer ${token}`)
+  } else if (isContractorRequest) {
+    config.headers.delete('Authorization')
   }
   return config
 })

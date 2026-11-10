@@ -109,11 +109,15 @@
     "currentLanguage": "Current: {{lang}}"
   },
   "contractor": {
-    "invalidLink": "Invalid or expired link",
+    "invalidLink": "Invalid, expired or already used link",
+    "tokenUnavailable": "This confirmation link is invalid, expired or has already been used.",
+    "tokenUnavailableHelp": "Ask the worker for a new confirmation link if you still need to respond.",
+    "responseFailed": "Your response was not confirmed. Please try again.",
     "contractorPage": "Contractor Page",
     "noticeTitle": "Important Notice",
     "noticeDescription": "By confirming this entry, you are acknowledging the work performed and the amounts agreed upon.",
     "workEntry": "Work Entry",
+    "entryId": "Entry #{{id}}",
     "language": "Language: {{lang}}",
     "confirmEntry": "Confirm Entry",
     "confirmDescription": "Please confirm or dispute this entry by voice or tap",
@@ -122,7 +126,17 @@
     "tapNo": "Tap No",
     "disputeEntry": "Dispute Entry",
     "tapDispute": "Tap to Dispute",
+    "disputeReason": "Reason for dispute (optional)",
+    "submitDispute": "Submit Dispute",
     "thanksTitle": "Thank You!",
-    "thanksDescription": "Your response has been recorded. This entry is now updated in the worker's record."
+    "recordedStatus": "Your {{result}} response was recorded. Current entry status: {{status}}.",
+    "results": {
+      "yes": "Yes",
+      "no": "No",
+      "dispute": "Dispute"
+    },
+    "notSubmittedTitle": "No response confirmed",
+    "notSubmittedDescription": "A response has not been confirmed by the server.",
+    "returnToEntry": "Return to entry"
   }
 }

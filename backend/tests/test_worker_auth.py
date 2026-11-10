@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
 
 import main
-from app.models import Base, EvidencePack, ShareToken
+from app.models import Base, Confirmation, EvidencePack, ShareToken
 from app.routers import auth, contractor, entries, evidence
 
 
@@ -206,8 +206,20 @@ def test_worker_ownership_and_legitimate_register_entry_share_evidence_workflow(
     assert verification.json()["valid"] is True
 
 
-def test_contractor_token_cannot_read_other_entries_and_expired_tokens_are_rejected(
+@pytest.mark.parametrize(
+    ("result", "expected_status", "reason"),
+    [
+        ("yes", "CONTRACTOR_CONFIRMED", None),
+        ("no", "UNCONFIRMED", None),
+        ("dispute", "CONTRACTOR_DISPUTED", "The recorded wage is incorrect"),
+        ("dispute", "CONTRACTOR_DISPUTED", None),
+    ],
+)
+def test_contractor_token_access_and_all_response_results(
     api_client: tuple[TestClient, sessionmaker],
+    result: str,
+    expected_status: str,
+    reason: str | None,
 ):
     client, test_session = api_client
     _, token = register(client, "worker-three")
@@ -235,6 +247,37 @@ def test_contractor_token_cannot_read_other_entries_and_expired_tokens_are_rejec
         )
         db.commit()
 
-    assert client.get(f"/api/contractor/{valid_token}").json()["entry_id"] == entry_id
-    assert client.get(f"/api/contractor/{expired_token}").status_code == 404
+    assert client.get(f"/api/contractor/{valid_token}").json() == {
+        "entry_text": "Token-owned entry",
+        "language": "en-IN",
+        "entry_id": entry_id,
+    }
     assert client.get("/api/contractor/unknown-share-token").status_code == 404
+    assert client.post(
+        "/api/contractor/unknown-share-token/respond",
+        json={"result": result},
+    ).status_code == 404
+    assert client.get(f"/api/contractor/{expired_token}").status_code == 404
+    assert client.post(
+        f"/api/contractor/{expired_token}/respond",
+        json={"result": result},
+    ).status_code == 404
+
+    response_body = {"result": result}
+    if reason is not None:
+        response_body["reason_text"] = reason
+    response = client.post(
+        f"/api/contractor/{valid_token}/respond",
+        json=response_body,
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == expected_status
+    assert client.get(f"/api/contractor/{valid_token}").status_code == 404
+    assert client.post(
+        f"/api/contractor/{valid_token}/respond",
+        json={"result": result},
+    ).status_code == 404
+    with test_session() as db:
+        confirmation = db.query(Confirmation).one()
+        assert confirmation.result == result
+        assert confirmation.reason_text == reason

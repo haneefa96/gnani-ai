@@ -6,12 +6,15 @@ import {
   clearAuthSession,
   getAccessToken,
   getApiErrorMessage,
+  getContractorApiErrorMessage,
+  getContractorEntry,
   getEntries,
   isJwtExpired,
   loginWorker,
   registerWorker,
   restoreAuthSession,
   storeAuthSession,
+  submitContractorResponse,
 } from './api'
 
 const accessToken = 'test.access.token'
@@ -190,6 +193,70 @@ describe('frontend authentication client', () => {
 
     await expect(getEntries()).resolves.toEqual(entries)
     expect(requestUrl).toBe('/entries/')
+  })
+
+  it('uses the share token without sending worker auth and supports each contractor response', async () => {
+    storeAuthSession(createJwt(Math.floor(Date.now() / 1000) + 60), {
+      alias: 'worker-one',
+      language: 'en-IN',
+    })
+    const requests: Array<{ url: string; auth: unknown; body?: unknown }> = []
+    let responseCount = 0
+    const results = [
+      { status: 'CONTRACTOR_CONFIRMED' },
+      { status: 'UNCONFIRMED' },
+      { status: 'CONTRACTOR_DISPUTED' },
+    ]
+    api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
+      requests.push({
+        url: config.url ?? '',
+        auth: config.headers.get('Authorization'),
+        body: config.data ? JSON.parse(config.data as string) : undefined,
+      })
+      const data = responseCount === 0
+        ? { entry_text: 'Actual contractor entry', language: 'hi-IN', entry_id: 23 }
+        : results[responseCount - 1]
+      responseCount += 1
+      return {
+        data,
+        status: 200,
+        statusText: 'OK',
+        headers: new AxiosHeaders(),
+        config,
+      }
+    }
+
+    await expect(getContractorEntry('share token')).resolves.toEqual({
+      entry_text: 'Actual contractor entry',
+      language: 'hi-IN',
+      entry_id: 23,
+    })
+    await expect(submitContractorResponse('share token', 'yes')).resolves.toEqual(results[0])
+    await expect(submitContractorResponse('share token', 'no')).resolves.toEqual(results[1])
+    await expect(
+      submitContractorResponse('share token', 'dispute', '  Wage differs  '),
+    ).resolves.toEqual(results[2])
+
+    expect(requests.map(({ url }) => url)).toEqual([
+      '/contractor/share%20token',
+      '/contractor/share%20token/respond',
+      '/contractor/share%20token/respond',
+      '/contractor/share%20token/respond',
+    ])
+    expect(requests.every(({ auth }) => auth === undefined)).toBe(true)
+    expect(requests.slice(1).map(({ body }) => body)).toEqual([
+      { result: 'yes' },
+      { result: 'no' },
+      { result: 'dispute', reason_text: 'Wage differs' },
+    ])
+  })
+
+  it('handles invalid and consumed contractor share tokens as unavailable', async () => {
+    api.defaults.adapter = errorAdapter(404, 'Invalid or expired token')
+    await expect(getContractorEntry('missing')).rejects.toSatisfy(
+      (error: unknown) =>
+        getContractorApiErrorMessage(error, 'Link unavailable') === 'Link unavailable',
+    )
   })
 
   it('does not log the user out for an incorrect login PIN', async () => {
