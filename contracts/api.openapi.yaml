@@ -1,0 +1,561 @@
+openapi: 3.0.0
+info:
+  title: Saakshi API
+  version: 1.0.0
+  description: Worker-Held Voice Wage Ledger API
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  schemas:
+    EntryDraft:
+      type: object
+      required:
+        - work_date
+        - site_name
+        - counterparty_name
+        - hours
+        - agreed_amount_inr
+        - paid_amount_inr
+        - due_amount_inr
+        - language
+        - field_confidence
+        - needs_clarification
+        - clarification_question
+      properties:
+        work_date:
+          type: string
+          format: date
+        site_name:
+          type: string
+        counterparty_name:
+          type: string
+        work_type:
+          type: string
+          nullable: true
+        hours:
+          type: number
+          nullable: true
+        days:
+          type: number
+          nullable: true
+        agreed_amount_inr:
+          type: integer
+        paid_amount_inr:
+          type: integer
+        due_amount_inr:
+          type: integer
+        field_confidence:
+          type: object
+          additionalProperties:
+            type: number
+        needs_clarification:
+          type: array
+          items:
+            type: string
+        clarification_question:
+          type: string
+          nullable: true
+        language:
+          type: string
+        detected_language_code:
+          type: string
+          nullable: true
+
+    WorkerCreate:
+      type: object
+      required:
+        - alias
+        - pin_hash
+        - language
+        - consent_audio_uri
+        - consent_text_version
+        - consent_at
+      properties:
+        alias:
+          type: string
+        pin_hash:
+          type: string
+        language:
+          type: string
+        consent_audio_uri:
+          type: string
+        consent_text_version:
+          type: string
+        consent_at:
+          type: string
+          format: date-time
+
+    WorkerLogin:
+      type: object
+      required:
+        - alias
+        - pin
+      properties:
+        alias:
+          type: string
+        pin:
+          type: string
+
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - worker_id
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        worker_id:
+          type: string
+
+    EntryCreate:
+      type: object
+      required:
+        - audio_ref
+        - transcript
+        - lang
+      properties:
+        audio_ref:
+          type: string
+        transcript:
+          type: string
+        lang:
+          type: string
+
+    EntryUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [WORKER_CONFIRMED, CONTRACTOR_CONFIRMED, CONTRACTOR_DISPUTED, UNCONFIRMED, DELETED]
+
+    EntryCorrect:
+      type: object
+      required:
+        - audio_ref
+        - transcript
+        - lang
+      properties:
+        audio_ref:
+          type: string
+        transcript:
+          type: string
+        lang:
+          type: string
+
+    ShareTokenResponse:
+      type: object
+      required:
+        - share_url
+      properties:
+        share_url:
+          type: string
+
+    ContractorResponse:
+      type: object
+      properties:
+        result:
+          type: string
+          enum: [yes, no, dispute]
+        reason_text:
+          type: string
+          nullable: true
+        reason_audio_uri:
+          type: string
+          nullable: true
+
+    EvidencePackResponse:
+      type: object
+      required:
+        - pdf_uri
+        - zip_uri
+        - chain_head_hash
+      properties:
+        pdf_uri:
+          type: string
+        zip_uri:
+          type: string
+        chain_head_hash:
+          type: string
+
+    VerificationResult:
+      type: object
+      required:
+        - valid
+        - mismatch_reason
+      properties:
+        valid:
+          type: boolean
+        mismatch_reason:
+          type: string
+          nullable: true
+
+    CountersignatureResponse:
+      type: object
+      required:
+        - countersignature
+      properties:
+        countersignature:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new worker
+      operationId: register_worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerCreate'
+      responses:
+        '201':
+          description: Worker registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerCreate'
+        '400':
+          description: Invalid input
+
+  /api/auth/login:
+    post:
+      summary: Login a worker
+      operationId: login_worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerLogin'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials
+
+  /ws/stt:
+    get:
+      summary: WebSocket endpoint for STT streaming
+      operationId: stt_websocket
+      parameters:
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: mode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [narration, confirm]
+      responses:
+        '101':
+          description: WebSocket upgrade
+          headers:
+            Upgrade:
+              schema:
+                type: string
+            Connection:
+              schema:
+                type: string
+
+  /api/voice/tts:
+    post:
+      summary: Synthesize speech
+      operationId: synthesize_tts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - lang
+              properties:
+                text:
+                  type: string
+                lang:
+                  type: string
+                voice:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Audio returned
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+
+  /api/voice/extract:
+    post:
+      summary: Extract entry from transcript
+      operationId: extract_entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transcript
+                - lang
+              properties:
+                transcript:
+                  type: string
+                lang:
+                  type: string
+                context:
+                  type: object
+      responses:
+        '200':
+          description: Entry draft returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryDraft'
+
+  /api/entries:
+    get:
+      summary: Get all entries for current worker
+      operationId: get_entries
+      responses:
+        '200':
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      type: object
+
+  /api/entries/draft:
+    post:
+      summary: Create a new entry draft
+      operationId: create_entry_draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryCreate'
+      responses:
+        '201':
+          description: Entry draft created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryDraft'
+
+  /api/entries/{id}:
+    get:
+      summary: Get entry by ID
+      operationId: get_entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entry details
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      summary: Update entry (not allowed for content fields)
+      operationId: update_entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryUpdate'
+      responses:
+        '405':
+          description: Content update not allowed
+
+  /api/entries/{id}/confirm:
+    post:
+      summary: Confirm entry with worker's spoken yes
+      operationId: confirm_entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entry confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+
+  /api/entries/{id}/correct:
+    post:
+      summary: Create a correcting entry
+      operationId: create_correction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryCorrect'
+      responses:
+        '201':
+          description: Correction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryDraft'
+
+  /api/entries/{id}/share:
+    post:
+      summary: Create share token for contractor
+      operationId: share_entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Share token created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareTokenResponse'
+
+  /api/c/{token}:
+    get:
+      summary: Get contractor entry data
+      operationId: get_contractor_entry
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entry data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entry_text:
+                    type: string
+                  language:
+                    type: string
+                  entry_id:
+                    type: string
+
+  /api/c/{token}/respond:
+    post:
+      summary: Contractor response to entry
+      operationId: contractor_respond
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractorResponse'
+      responses:
+        '200':
+          description: Response recorded
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/evidence:
+    post:
+      summary: Build evidence pack
+      operationId: build_evidence_pack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                worker_id:
+                  type: string
+                period_from:
+                  type: string
+                  format: date
+                period_to:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Evidence pack created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidencePackResponse'
+
+  /api/verify:
+    get:
+      summary: Verify hash chain integrity
+      operationId: verify_chain
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
